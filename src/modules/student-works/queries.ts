@@ -1,5 +1,6 @@
 import { pool, query, queryOne } from "@/lib/db";
 import type { StudentWork, StudentWorkVersion, WorkType } from "@/types";
+import { sanitizeJsonValue } from "@/lib/sanitize-json";
 
 const STUDENT_WORK_COLUMNS = `
   id, student_id, mission_id, mission_attempt_id, work_type, title,
@@ -192,6 +193,11 @@ export async function saveStudentWorkContent(
     throw new StudentWorkNotEditableError();
   }
 
+  // Conteúdo vem de fora (autosave do editor) — nunca confiar nele sem
+  // sanitizar chaves perigosas (__proto__/constructor/prototype) antes de
+  // persistir. Ver GHSA-cp6q-959q-f8rh (mergeAttributes do Tiptap).
+  const safeContent = sanitizeJsonValue(input.content);
+
   const updated = await queryOne<StudentWork>(
     `UPDATE student_works
      SET content = $1::jsonb,
@@ -201,7 +207,7 @@ export async function saveStudentWorkContent(
          updated_at = now()
      WHERE id = $3 AND student_id = $4
      RETURNING ${STUDENT_WORK_COLUMNS}`,
-    [JSON.stringify(input.content), input.title ?? null, workId, studentId]
+    [JSON.stringify(safeContent), input.title ?? null, workId, studentId]
   );
   if (!updated) throw new Error("Não foi possível salvar o trabalho.");
   return updated;
@@ -256,6 +262,18 @@ export async function submitStudentWork(
   } finally {
     client.release();
   }
+}
+
+/**
+ * Lista simples de missões ativas para o aluno escolher ao criar um trabalho
+ * avulso (seção "Meus Trabalhos"). Temporário: a partir da Fase 9.4, a
+ * missão vai declarar seu próprio `work_type`/modelo e essa escolha manual
+ * deixa de ser necessária.
+ */
+export async function listMissionsForNewWork(): Promise<{ id: string; title: string }[]> {
+  return query<{ id: string; title: string }>(
+    `SELECT id, title FROM missions WHERE active ORDER BY title ASC`
+  );
 }
 
 export async function listStudentWorkVersions(

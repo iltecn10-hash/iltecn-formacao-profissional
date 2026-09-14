@@ -332,3 +332,15 @@ export interface WorkComment {
   created_at: string;
   author_name?: string;
 }
+
+/**
+ * Formato de `student_works.content` quando `work_type = 'DOCUMENT'`.
+ * `fields` guarda os campos estruturados de texto simples/data do modelo
+ * (número, data, destinatário...). `rich` guarda, para cada campo do tipo
+ * "richtext" do modelo (ou a chave fixa "body" quando não há modelo), o JSON
+ * do editor Tiptap daquele campo.
+ */
+export interface DocumentWorkContent {
+  fields: Record<string, string>;
+  rich: Record<string, Record<string, unknown>>;
+}

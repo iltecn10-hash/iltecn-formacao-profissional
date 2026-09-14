@@ -121,12 +121,55 @@ necessário para as atividades profissionais previstas).
   exigidos (9.4), fluxo de entrega ligado à avaliação automática (9.5), dashboard do
   professor "Trabalhos dos Alunos" (9.6).
 
+### 9.2 — Editor de documentos (concluída em 2026-09-14)
+
+- Dependência nova (avaliada antes de instalar — seção 31): Tiptap 2.27.3
+  (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-underline`,
+  `@tiptap/extension-text-align`, `@tiptap/extension-text-style`, `@tiptap/extension-table`
+  + `table-row`/`table-cell`/`table-header`) — única versão da linha 2.x com suporte
+  oficial a React 19, versões fixadas (sem `^`). **Vulnerabilidade conhecida:** o advisory
+  GHSA-cp6q-959q-f8rh (`mergeAttributes()` tratando uma chave `__proto__` própria como
+  atributo de DOM herdado/executável) cobre toda a série 2.x — só corrigido numa major
+  (3.x) com API incompatível. Em vez de forçar essa migração agora, mitigado na fronteira
+  de confiança: `src/lib/sanitize-json.ts` remove recursivamente chaves
+  `__proto__`/`constructor`/`prototype` de todo conteúdo antes de gravar em
+  `student_works.content` (usado em `saveStudentWorkContent`). Reavaliar quando o Tiptap 3
+  estabilizar.
+- Duas extensões Tiptap pequenas e caseiras em vez de mais dependências
+  (`src/components/document-editor/extensions.ts`): `FontSize` (atributo em `textStyle`) e
+  `Indent` (recuo básico de parágrafo/título, 0–8 níveis).
+- Modelos pedagógicos (seção 5) em `src/lib/document-templates.ts`: memorando,
+  requerimento, declaração, relatório, comunicado — cada um com campos estruturados
+  (texto/data) e ao menos um campo richtext. Documento "livre" (sem modelo) usa um único
+  campo richtext (`FREEFORM_BODY_FIELD`).
+- Formato de `student_works.content` para `work_type = 'DOCUMENT'`:
+  `{ fields: Record<string,string>, rich: Record<string, TiptapJSON> }` — ver
+  `DocumentWorkContent` em `src/types/index.ts`. Não exigiu nenhuma migration nova: o
+  `content JSONB` da 9.1 já comporta esse formato.
+- UI: `/dashboard/trabalhos` ("Meus Trabalhos" — lista os trabalhos do aluno + formulário
+  para criar um documento novo escolhendo missão e modelo) e
+  `/dashboard/trabalhos/documento/[id]` (o editor). Autosave via `PATCH` com debounce de
+  1.5s e indicador "Salvando…/Salvo/Erro ao salvar"; "Entregar documento" chama
+  `POST .../submit` e trava a edição; botão "Imprimir/PDF" usa `window.print()` com CSS
+  `@media print` dedicado (sem depender de biblioteca de geração de PDF — seção 7).
+- A escolha de missão/modelo na criação do documento é manual e temporária: a partir da
+  9.4, a própria missão vai declarar isso (`work_config`), e essa tela deixa de perguntar.
+- Testes novos: `tests/unit/sanitize-json.test.ts` (remoção de `__proto__`/`constructor`/
+  `prototype`, inclusive aninhado) e `tests/unit/document-templates.test.ts` (catálogo de
+  modelos). 9 testes novos, 49 no total, todos passando; build e lint sem erros.
+- Verificação manual (seção 36) feita direto na Vercel de produção: aluno fictício
+  "Aluno Teste Fase9" criado pelo admin real, login, criação de um memorando, edição de
+  campos + texto rico + tabela, autosave confirmado após reload, entrega, e confirmação de
+  que a edição fica bloqueada depois de entregue.
+- Ainda **não implementado**: editor de planilhas (9.3), integração real com o `work_type`
+  da missão (9.4), avaliação (9.5), dashboard do professor (9.6).
+
 ### Próximas subfases
 
-9.2 Editor de documentos → 9.3 Editor de planilhas → 9.4 Integração com missões (campo de
-configuração em `missions`, ex. `work_config JSONB`) → 9.5 Entrega e avaliação → 9.6
-Integração com professor → 9.7 Testes e refinamento. Cada uma só deve avançar depois da
-anterior estar validada (testes + build passando).
+9.3 Editor de planilhas → 9.4 Integração com missões (campo de configuração em `missions`,
+ex. `work_config JSONB`, substituindo a escolha manual de missão/modelo da 9.2) → 9.5
+Entrega e avaliação → 9.6 Integração com professor → 9.7 Testes e refinamento. Cada uma só
+deve avançar depois da anterior estar validada (testes + build passando).
 
 ## Comandos
 
