@@ -365,6 +365,27 @@ necessário para as atividades profissionais previstas).
   entrega de novo depois de devolvido gera nova versão e nova avaliação `AUTO` (agora há
   2 avaliações `AUTO` no histórico, uma por entrega). 5 testes novos, 87 no total, todos
   passando; `npm run lint`, `tsc --noEmit` e `npm run build` sem erros.
+- **Dois bugs encontrados na verificação ao vivo em produção (corrigidos no mesmo dia,
+  antes de fechar a subfase):** em ambos os casos o sintoma era o mesmo — a avaliação
+  nova não aparecia na tela, só depois de um reload manual — mas com causas e correções
+  diferentes por serem componentes/fluxos distintos:
+  1. **Lado do professor:** `ManualEvaluationForm` chamava `router.refresh()` após
+     aprovar/devolver, mas `WorkEvaluationPanel` é um client component que busca as
+     avaliações uma única vez no mount e só reage a mudança de `workId` (que não muda
+     aqui) — `router.refresh()` atualiza o Server Component, não remonta esse painel.
+     Corrigido trocando por `window.location.reload()` no formulário (aceitável nessa
+     tela, que não tem estado de edição em andamento para perder).
+  2. **Lado do aluno:** reentregar um trabalho `RETURNED` (que já mostra os painéis de
+     avaliação/comentários desde a correção do bug da 9.5) tem o mesmo problema: os
+     painéis já estavam montados antes da reentrega, então `RETURNED → SUBMITTED` não
+     disparava um novo fetch. Aqui um reload de página seria mais invasivo (o aluno está
+     no meio da edição), então a correção foi `key={status}` em `WorkEvaluationPanel` e
+     `WorkCommentsThread` dentro dos dois editores — ao mudar o status, o React
+     desmonta/remonta os painéis, refazendo o fetch automaticamente.
+  - Aprendizado para próximas subfases: qualquer client component que busca dados uma
+    vez no mount e é reaproveitado num fluxo onde o status/conteúdo muda por baixo dele
+    (sem trocar de página) precisa de uma estratégia explícita de refetch — `key` quando
+    dá para remontar sem custo, reload completo quando não há estado a preservar.
 
 ### Próximas subfases
 
