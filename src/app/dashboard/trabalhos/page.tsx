@@ -7,6 +7,7 @@ import {
   listMissionsForNewWork,
 } from "@/modules/student-works/queries";
 import { NewDocumentForm } from "@/components/student-works/new-document-form";
+import { NewSpreadsheetForm } from "@/components/student-works/new-spreadsheet-form";
 import type { StudentWorkStatus } from "@/types";
 
 const statusLabel: Record<StudentWorkStatus, string> = {
@@ -68,25 +69,32 @@ export default async function MeusTrabalhosPage() {
                 >
                   {statusLabel[work.status]}
                 </span>
-                {work.work_type === "DOCUMENT" ? (
-                  <Link
-                    href={`/dashboard/trabalhos/documento/${work.id}`}
-                    className="text-sm font-medium text-primary underline underline-offset-2"
-                  >
-                    Abrir
-                  </Link>
-                ) : (
-                  <span className="text-sm text-muted">Editor de planilhas em breve</span>
-                )}
+                <Link
+                  href={`/dashboard/trabalhos/${
+                    work.work_type === "DOCUMENT" ? "documento" : "planilha"
+                  }/${work.id}`}
+                  className="text-sm font-medium text-primary underline underline-offset-2"
+                >
+                  Abrir
+                </Link>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="h-fit rounded-lg border border-border bg-surface p-5">
-          <h2 className="font-heading text-sm font-semibold text-foreground">Novo documento</h2>
-          <div className="mt-4">
-            <NewDocumentForm missions={missions} />
+        <div className="flex h-fit flex-col gap-6">
+          <div className="rounded-lg border border-border bg-surface p-5">
+            <h2 className="font-heading text-sm font-semibold text-foreground">Novo documento</h2>
+            <div className="mt-4">
+              <NewDocumentForm missions={missions} />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border bg-surface p-5">
+            <h2 className="font-heading text-sm font-semibold text-foreground">Nova planilha</h2>
+            <div className="mt-4">
+              <NewSpreadsheetForm missions={missions} />
+            </div>
           </div>
         </div>
       </div>

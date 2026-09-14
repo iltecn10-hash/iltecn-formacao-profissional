@@ -344,3 +344,17 @@ export interface DocumentWorkContent {
   fields: Record<string, string>;
   rich: Record<string, Record<string, unknown>>;
 }
+
+/**
+ * Formato de `student_works.content` quando `work_type = 'SPREADSHEET'`.
+ * `cells` é um mapa esparso — só células com conteúdo aparecem — indexado
+ * por referência estilo planilha ("A1", "B12"). Cada valor é o texto bruto
+ * digitado pelo aluno: um literal (texto/número) ou uma fórmula começando
+ * com "=" (ver `src/lib/spreadsheet-formulas.ts`). `rows`/`cols` definem o
+ * tamanho da grade exibida.
+ */
+export interface SpreadsheetWorkContent {
+  rows: number;
+  cols: number;
+  cells: Record<string, string>;
+}

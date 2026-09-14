@@ -164,12 +164,57 @@ necessário para as atividades profissionais previstas).
 - Ainda **não implementado**: editor de planilhas (9.3), integração real com o `work_type`
   da missão (9.4), avaliação (9.5), dashboard do professor (9.6).
 
+### 9.3 — Editor de planilhas (concluída em 2026-09-14)
+
+- Nenhuma dependência nova: em vez de uma biblioteca de planilha (avaliado e descartado
+  por ir contra a seção 31 — "evitar dependências desnecessárias" — para uma grade simples
+  de fórmulas básicas), o motor de fórmulas e a grade são implementação própria.
+- Motor de fórmulas em `src/lib/spreadsheet-formulas.ts`: tokenizador + parser recursivo
+  próprios (sem `eval`/`Function` em nenhum momento — o conteúdo vem do aluno e é tratado
+  como dado não confiável, mesma postura da 9.2). Suporta os quatro operadores aritméticos
+  com precedência e parênteses, referências de célula (`A1`), intervalos (`A1:B3`) e as
+  funções `SOMA`/`SUM`, `MEDIA`/`AVERAGE`, `MAXIMO`/`MAX`, `MINIMO`/`MIN`,
+  `CONTAR`/`CONT.VALORES`/`COUNT` (nomes em português e inglês). Detecta referência
+  circular e divisão por zero sem travar (retorna célula `#ERRO` com mensagem). Intervalo
+  vazio: `SOMA`/`CONTAR` resultam em 0 (como em planilhas reais); `MEDIA`/`MAXIMO`/`MINIMO`
+  retornam erro (não há como tirar média/máximo de nada).
+- Modelos pedagógicos em `src/lib/spreadsheet-templates.ts`: Fechamento de Caixa, Controle
+  de Estoque, Contas a Pagar da Semana, Comparativo de Vendas por Vendedor — cada um com
+  cabeçalhos e ao menos uma fórmula de exemplo já funcionando. Planilha "livre" usa uma
+  grade em branco de 20×8 (`FREEFORM_GRID`).
+- Formato de `student_works.content` para `work_type = 'SPREADSHEET'`:
+  `{ rows: number, cols: number, cells: Record<string, string> }` — mapa esparso, só
+  células preenchidas aparecem (ver `SpreadsheetWorkContent` em `src/types/index.ts`). Não
+  exigiu nenhuma migration nova, pelo mesmo motivo da 9.2.
+- UI: `src/components/spreadsheet-editor/spreadsheet-grid.tsx` (grade HTML editável, célula
+  ativa vira `<input>` mostrando a fórmula bruta, célula inativa mostra o valor calculado;
+  Enter desce uma linha, Tab avança uma coluna) e `spreadsheet-work-editor.tsx`
+  (título, autosave com o mesmo debounce de 1.5s da 9.2, botões "+ Linha"/"+ Coluna" com
+  limite de 60×20, "Entregar planilha" trava a edição, "Imprimir/PDF" via `window.print()`).
+  `/dashboard/trabalhos` ganhou um segundo formulário lateral ("Nova planilha") ao lado do
+  de documento, e a listagem de trabalhos agora abre documento ou planilha conforme
+  `work_type`.
+- Reaproveita 100% da infraestrutura da 9.1 (mesmas APIs REST, mesmo
+  `saveStudentWorkContent`/`submitStudentWork`/`sanitizeJsonValue`) — nenhuma rota nova.
+- Testes novos: `tests/unit/spreadsheet-formulas.test.ts` (aritmética, referências,
+  intervalos, funções, erros de divisão por zero e referência circular, formatação) e
+  `tests/unit/spreadsheet-templates.test.ts` (catálogo de modelos, fórmulas de exemplo
+  avaliando sem erro). 21 testes novos, 70 no total, todos passando; `npm run lint` sem
+  erros; `npm run build` limpo (precisa de `DATABASE_URL` definida no ambiente — mesmo em
+  um valor fictício — porque o `pg.Pool` é criado no import do módulo `db.ts`; não conecta
+  de fato nesse momento, só na primeira query).
+- Ainda **não implementado**: integração real com `work_type`/modelo declarado pela missão
+  (9.4 — a escolha manual de missão/modelo nos dois formulários é temporária), avaliação
+  automática do conteúdo (9.5), dashboard do professor (9.6). Verificação manual em
+  produção (seção 36) ainda **pendente** para esta subfase — só a criação de documento foi
+  testada ao vivo até agora.
+
 ### Próximas subfases
 
-9.3 Editor de planilhas → 9.4 Integração com missões (campo de configuração em `missions`,
-ex. `work_config JSONB`, substituindo a escolha manual de missão/modelo da 9.2) → 9.5
-Entrega e avaliação → 9.6 Integração com professor → 9.7 Testes e refinamento. Cada uma só
-deve avançar depois da anterior estar validada (testes + build passando).
+9.4 Integração com missões (campo de configuração em `missions`, ex. `work_config JSONB`,
+substituindo a escolha manual de missão/modelo da 9.2/9.3) → 9.5 Entrega e avaliação → 9.6
+Integração com professor → 9.7 Testes e refinamento. Cada uma só deve avançar depois da
+anterior estar validada (testes + build passando).
 
 ## Comandos
 
