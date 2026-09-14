@@ -1,18 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 /**
  * Formulário de avaliação manual do professor (Fase 9.6). Só aparece na
  * página de staff, para um trabalho já entregue (`submitted_at` setado —
  * o backend também garante essa regra em `recordManualEvaluation`).
- * Ao enviar, o trabalho muda de status (APPROVED ou RETURNED) no servidor;
- * `router.refresh()` recarrega a página para refletir o novo status e a
- * nova avaliação na lista, sem precisar duplicar esse estado no cliente.
+ *
+ * Ao enviar, o trabalho muda de status (APPROVED ou RETURNED) no servidor.
+ * Usamos `window.location.reload()` em vez de `router.refresh()` de
+ * propósito: o `WorkEvaluationPanel` embutido no editor busca as avaliações
+ * uma única vez, no mount, e só reage a mudança de `workId` — um
+ * `router.refresh()` traz `work` atualizado para o Server Component, mas não
+ * remonta esse painel, então a nova avaliação MANUAL não apareceria sem um
+ * reload completo da página (verificado ao vivo em produção).
  */
 export function ManualEvaluationForm({ workId }: { workId: string }) {
-  const router = useRouter();
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [sending, setSending] = useState(false);
@@ -45,9 +48,7 @@ export function ManualEvaluationForm({ workId }: { workId: string }) {
         setError(data?.error ?? "Não foi possível registrar a avaliação.");
         return;
       }
-      setScore("");
-      setFeedback("");
-      router.refresh();
+      window.location.reload();
     } catch {
       setError("Não foi possível registrar a avaliação.");
     } finally {
