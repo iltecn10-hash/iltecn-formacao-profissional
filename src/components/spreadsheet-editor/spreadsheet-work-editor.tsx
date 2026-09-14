@@ -180,8 +180,16 @@ export function SpreadsheetWorkEditor({
           necessário e entregue novamente.
         </p>
       )}
-      {hasSubmission && <WorkEvaluationPanel workId={work.id} />}
-      {hasSubmission && <WorkCommentsThread workId={work.id} />}
+      {/*
+        `key={status}` força o React a desmontar/remontar estes dois painéis
+        sempre que o status muda (ex.: RETURNED → SUBMITTED ao reentregar).
+        Sem isso, o componente já montado não refaz o fetch — ele só busca
+        as avaliações uma vez, no mount — e a nova avaliação automática da
+        reentrega ficaria escondida até um reload manual da página (bug
+        visto ao vivo em produção na verificação da Fase 9.6).
+      */}
+      {hasSubmission && <WorkEvaluationPanel key={status} workId={work.id} />}
+      {hasSubmission && <WorkCommentsThread key={status} workId={work.id} />}
 
       {!isLocked && (
         <p className="mt-3 text-xs text-muted print:hidden">
