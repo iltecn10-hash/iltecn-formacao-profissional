@@ -9,30 +9,13 @@ const TYPE_LABEL: Record<WorkEvaluation["evaluation_type"], string> = {
 };
 
 /**
- * Mostra as avaliações de um trabalho já entregue (Fase 9.5: a automática,
- * calculada na hora da entrega; Fase 9.6 acrescenta as manuais do professor
- * na mesma lista, sem mudar este componente). Só faz sentido depois que o
- * trabalho está travado — antes disso não existe avaliação nenhuma ainda.
+ * Renderização pura da lista de avaliações (Fase 9.5: automática; Fase 9.6:
+ * manuais do professor na mesma lista). Extraído de `WorkEvaluationPanel`
+ * para ser reaproveitado pela página de staff (`/dashboard/trabalhos-alunos`),
+ * que já busca os dados no servidor e não precisa de um fetch próprio.
  */
-export function WorkEvaluationPanel({ workId }: { workId: string }) {
-  const [evaluations, setEvaluations] = useState<WorkEvaluation[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/student-works/${workId}/evaluations`)
-      .then((res) => (res.ok ? res.json() : { evaluations: [] }))
-      .then((data) => {
-        if (!cancelled) setEvaluations(data.evaluations ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setEvaluations([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [workId]);
-
-  if (!evaluations || evaluations.length === 0) return null;
+export function EvaluationList({ evaluations }: { evaluations: WorkEvaluation[] }) {
+  if (evaluations.length === 0) return null;
 
   return (
     <div className="mt-4 flex flex-col gap-3 print:hidden">
@@ -67,4 +50,33 @@ export function WorkEvaluationPanel({ workId }: { workId: string }) {
       ))}
     </div>
   );
+}
+
+/**
+ * Mostra as avaliações de um trabalho já entregue (Fase 9.5: a automática,
+ * calculada na hora da entrega; Fase 9.6 acrescenta as manuais do professor
+ * na mesma lista, sem mudar este componente). Só faz sentido depois que o
+ * trabalho está travado — antes disso não existe avaliação nenhuma ainda.
+ */
+export function WorkEvaluationPanel({ workId }: { workId: string }) {
+  const [evaluations, setEvaluations] = useState<WorkEvaluation[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/student-works/${workId}/evaluations`)
+      .then((res) => (res.ok ? res.json() : { evaluations: [] }))
+      .then((data) => {
+        if (!cancelled) setEvaluations(data.evaluations ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setEvaluations([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workId]);
+
+  if (!evaluations) return null;
+
+  return <EvaluationList evaluations={evaluations} />;
 }

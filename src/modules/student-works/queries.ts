@@ -1,5 +1,5 @@
 import { pool, query, queryOne } from "@/lib/db";
-import type { StudentWork, StudentWorkVersion, WorkEvaluation, WorkType } from "@/types";
+import type { StudentWork, StudentWorkVersion, WorkComment, WorkEvaluation, WorkType } from "@/types";
 import { sanitizeJsonValue } from "@/lib/sanitize-json";
 import { evaluateStudentWork } from "@/lib/work-evaluation";
 
@@ -298,4 +298,82 @@ export async function listStudentWorkVersions(
      ORDER BY version DESC`,
     [workId]
   );
+}
+
+// ---- Fase 9.6: comentários e avaliação manual do professor ----
+
+/** Comentários de um trabalho (aluno e professor podem ler/escrever — controle fica na rota). */
+export async function listWorkComments(workId: string): Promise<WorkComment[]> {
+  return query<WorkComment>(
+    `SELECT wc.id, wc.student_work_id, wc.author_id, wc.body, wc.created_at,
+            u.name AS author_name
+     FROM work_comments wc
+     JOIN users u ON u.id = wc.author_id
+     WHERE wc.student_work_id = $1
+     ORDER BY wc.created_at ASC`,
+    [workId]
+  );
+}
+
+export async function addWorkComment(
+  workId: string,
+  authorId: string,
+  body: string
+): Promise<WorkComment> {
+  const comment = await queryOne<WorkComment>(
+    `INSERT INTO work_comments (student_work_id, author_id, body)
+     VALUES ($1, $2, $3)
+     RETURNING id, student_work_id, author_id, body, created_at`,
+    [workId, authorId, body]
+  );
+  if (!comment) throw new Error("Não foi possível adicionar o comentário.");
+
+  const author = await queryOne<{ name: string }>(
+    `SELECT name FROM users WHERE id = $1`,
+    [authorId]
+  );
+  return { ...comment, author_name: author?.name };
+}
+
+export class WorkNotSubmittedError extends Error {
+  constructor() {
+    super("Só é possível avaliar um trabalho que já foi entregue.");
+    this.name = "WorkNotSubmittedError";
+  }
+}
+
+/**
+ * Avaliação manual do professor (Fase 9.6). Toda avaliação manual decide o
+ * destino do trabalho: aprovado (`passed: true`) fecha em APPROVED; devolvido
+ * (`passed: false`) volta para RETURNED, que — por não estar em
+ * LOCKED_STATUSES — já reabre o trabalho para edição do aluno sem nenhuma
+ * lógica extra (assim como projetado desde o schema da Fase 9.1).
+ */
+export async function recordManualEvaluation(
+  workId: string,
+  evaluatorId: string,
+  input: { passed: boolean; score?: number; feedback?: string }
+): Promise<WorkEvaluation> {
+  const work = await queryOne<{ submitted_at: string | null }>(
+    `SELECT submitted_at FROM student_works WHERE id = $1`,
+    [workId]
+  );
+  if (!work) throw new Error("Trabalho não encontrado.");
+  if (!work.submitted_at) throw new WorkNotSubmittedError();
+
+  const evaluation = await queryOne<WorkEvaluation>(
+    `INSERT INTO work_evaluations
+       (student_work_id, evaluator_id, evaluation_type, score, passed, feedback, details)
+     VALUES ($1, $2, 'MANUAL', $3, $4, $5, NULL)
+     RETURNING id, student_work_id, evaluator_id, evaluation_type, score, passed, feedback, details, created_at`,
+    [workId, evaluatorId, input.score ?? null, input.passed, input.feedback ?? null]
+  );
+  if (!evaluation) throw new Error("Não foi possível registrar a avaliação.");
+
+  await query(
+    `UPDATE student_works SET status = $1, updated_at = now() WHERE id = $2`,
+    [input.passed ? "APPROVED" : "RETURNED", workId]
+  );
+
+  return evaluation;
 }

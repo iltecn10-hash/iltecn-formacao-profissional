@@ -310,10 +310,67 @@ necessário para as atividades profissionais previstas).
   mesma tabela, com `evaluator_id` preenchido) e o dashboard "Trabalhos dos Alunos" para
   ele acessar/comentar/avaliar (9.6).
 
+### 9.6 — Integração com professor (concluída em 2026-09-14)
+
+- Nenhuma migration nova: `work_evaluations` (avaliação `MANUAL`) e `work_comments` já
+  existiam desde a 9.1, só ainda não eram usadas.
+- `src/modules/student-works/queries.ts` ganhou:
+  - `listWorkComments` / `addWorkComment` — comentários de um trabalho, com o nome do
+    autor via join em `users`; sem regra de papel na query (a autorização fica na rota).
+  - `recordManualEvaluation(workId, evaluatorId, { passed, score?, feedback? })` — grava
+    uma avaliação `MANUAL` e **sempre** decide o destino do trabalho: `passed: true` →
+    `APPROVED`; `passed: false` → `RETURNED`. Guard: só avalia um trabalho com
+    `submitted_at` preenchido (`WorkNotSubmittedError` caso contrário). Como `RETURNED`
+    nunca esteve em `LOCKED_STATUSES` (decisão da 9.1), devolver o trabalho já o reabre
+    para edição do aluno automaticamente — nenhuma lógica nova precisou disso.
+- Novas rotas:
+  - `GET/POST /api/student-works/[id]/comments` — mesmo padrão de autorização de
+    `/evaluations` (aluno dono ou qualquer perfil de equipe); `POST` valida `body` não
+    vazio (máx. 2000 caracteres) com Zod.
+  - `POST /api/student-works/[id]/evaluate` — só `admin`/`teacher`/`coordinator`; Zod
+    valida `{ passed: boolean; score?: 0-100; feedback?: string }`; `WorkNotSubmittedError`
+    vira HTTP 409.
+- UI:
+  - `work-evaluation-panel.tsx` foi separado em `EvaluationList` (renderização pura,
+    recebe `evaluations` prontas) + `WorkEvaluationPanel` (busca e usa `EvaluationList`).
+    A página de staff acaba mostrando a mesma lista de novo através do próprio editor em
+    modo `readOnly` (que já embute `WorkEvaluationPanel`); `EvaluationList` fica disponível
+    para uma futura tela que busque os dados no servidor sem esse fetch extra no cliente.
+  - `work-comments-thread.tsx` (novo) — lista comentários e formulário de novo comentário;
+    usado sem alteração no editor do aluno e na página de staff (a autoria vem da sessão
+    no servidor).
+  - `manual-evaluation-form.tsx` (novo, só na página de staff) — nota opcional (0-100),
+    feedback opcional, botões "Aprovar" / "Devolver para revisão"; usa `router.refresh()`
+    após enviar em vez de estado local, já que o status/avaliação são recarregados do
+    servidor.
+  - `document-work-editor.tsx` e `spreadsheet-work-editor.tsx` ganharam uma prop opcional
+    `readOnly` (usada pela página de staff: sempre trava o editor, independente do
+    status) e trocaram o gate de `isLocked` para um novo `hasSubmission` (`readOnly ||
+    status ∈ {SUBMITTED, APPROVED, RETURNED}`) ao mostrar `WorkEvaluationPanel` e o novo
+    `WorkCommentsThread`. **Isso corrige um bug da 9.5**: o gate antigo (`isLocked`, que
+    exclui `RETURNED`) escondia a avaliação e o feedback exatamente quando o aluno mais
+    precisava vê-los — no trabalho devolvido. Também ganharam um aviso específico para
+    `RETURNED` ("foi devolvido pelo professor...") e o botão de entrega passa a dizer
+    "Entregar novamente" nesse estado.
+- Nova página `src/app/dashboard/trabalhos-alunos/page.tsx` (`admin`/`teacher`/
+  `coordinator`) — lista + detalhe em uma página só (mesmo padrão de
+  `/dashboard/relatorio`, seleção via `?workId=`), reaproveitando
+  `listStudentWorksForStaff` (já existia desde a 9.1) e os editores em modo `readOnly`
+  para mostrar o trabalho; `ManualEvaluationForm` só aparece quando `submitted_at` está
+  setado. Item de menu "Trabalhos dos Alunos" adicionado em `sidebar-nav.tsx` para os
+  mesmos três papéis.
+- Testes novos: `tests/integration/work-professor-review.test.ts` (via pg-mem) — lista
+  comentários em ordem cronológica com nome do autor; recusa avaliar trabalho nunca
+  entregue; aprovar muda status para `APPROVED`; devolver muda para `RETURNED`; aluno
+  entrega de novo depois de devolvido gera nova versão e nova avaliação `AUTO` (agora há
+  2 avaliações `AUTO` no histórico, uma por entrega). 5 testes novos, 87 no total, todos
+  passando; `npm run lint`, `tsc --noEmit` e `npm run build` sem erros.
+
 ### Próximas subfases
 
-9.6 Integração com professor → 9.7 Testes e refinamento. Cada uma só deve avançar depois
-da anterior estar validada (testes + build passando).
+9.7 Testes e refinamento (última subfase da Fase 9) — inclui revisitar a observação não
+bloqueante de closure obsoleto em `addRow`/`addColumn` do `spreadsheet-work-editor.tsx`
+já registrada no relatório da 9.3.
 
 ## Comandos
 

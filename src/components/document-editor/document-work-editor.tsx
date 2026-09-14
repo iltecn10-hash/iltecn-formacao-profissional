@@ -6,6 +6,7 @@ import type { DocumentWorkContent, StudentWork } from "@/types";
 import { getFieldDefs, getDocumentTemplate } from "@/lib/document-templates";
 import { RichField } from "./rich-field";
 import { WorkEvaluationPanel } from "@/components/work-evaluation-panel";
+import { WorkCommentsThread } from "@/components/work-comments-thread";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -27,7 +28,13 @@ function normalizeContent(raw: Record<string, unknown>): DocumentWorkContent {
   return { fields, rich };
 }
 
-export function DocumentWorkEditor({ work }: { work: StudentWork }) {
+export function DocumentWorkEditor({
+  work,
+  readOnly = false,
+}: {
+  work: StudentWork;
+  readOnly?: boolean;
+}) {
   const router = useRouter();
   const fieldDefs = useMemo(() => getFieldDefs(work.template_key), [work.template_key]);
   const template = useMemo(() => getDocumentTemplate(work.template_key), [work.template_key]);
@@ -43,7 +50,12 @@ export function DocumentWorkEditor({ work }: { work: StudentWork }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const isLocked = status === "SUBMITTED" || status === "APPROVED";
+  const isLocked = readOnly || status === "SUBMITTED" || status === "APPROVED";
+  // Inclui RETURNED: é o estado em que o professor devolveu com feedback —
+  // exatamente quando o aluno mais precisa ver a avaliação/comentários,
+  // mesmo com o documento reaberto para edição (Fase 9.6).
+  const hasSubmission =
+    readOnly || status === "SUBMITTED" || status === "APPROVED" || status === "RETURNED";
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestPayloadRef = useRef<{ title: string; content: DocumentWorkContent } | null>(null);
 
@@ -153,12 +165,19 @@ export function DocumentWorkEditor({ work }: { work: StudentWork }) {
         <p className="mt-1 text-sm text-muted">{template.description}</p>
       )}
 
-      {isLocked && (
+      {isLocked && status !== "RETURNED" && (
         <p className="mt-3 rounded-md bg-primary-light px-3 py-2 text-sm text-primary-dark print:hidden">
           Este documento já foi entregue e não pode mais ser editado.
         </p>
       )}
-      {isLocked && <WorkEvaluationPanel workId={work.id} />}
+      {status === "RETURNED" && !readOnly && (
+        <p className="mt-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger print:hidden">
+          Este documento foi devolvido pelo professor. Reveja o feedback abaixo, ajuste o que
+          for necessário e entregue novamente.
+        </p>
+      )}
+      {hasSubmission && <WorkEvaluationPanel workId={work.id} />}
+      {hasSubmission && <WorkCommentsThread workId={work.id} />}
 
       <div id="document-print-area" className="mt-6 flex flex-col gap-5">
         {fieldDefs.map((field) => {
@@ -204,7 +223,7 @@ export function DocumentWorkEditor({ work }: { work: StudentWork }) {
           disabled={submitting}
           className="mt-6 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60 print:hidden"
         >
-          {submitting ? "Entregando…" : "Entregar documento"}
+          {submitting ? "Entregando…" : status === "RETURNED" ? "Entregar novamente" : "Entregar documento"}
         </button>
       )}
     </div>

@@ -6,6 +6,7 @@ import type { SpreadsheetWorkContent, StudentWork } from "@/types";
 import { getInitialGrid, getSpreadsheetTemplate } from "@/lib/spreadsheet-templates";
 import { SpreadsheetGrid } from "./spreadsheet-grid";
 import { WorkEvaluationPanel } from "@/components/work-evaluation-panel";
+import { WorkCommentsThread } from "@/components/work-comments-thread";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -28,7 +29,13 @@ function normalizeContent(
   return { rows: initial.rows, cols: initial.cols, cells: cells ?? initial.cells };
 }
 
-export function SpreadsheetWorkEditor({ work }: { work: StudentWork }) {
+export function SpreadsheetWorkEditor({
+  work,
+  readOnly = false,
+}: {
+  work: StudentWork;
+  readOnly?: boolean;
+}) {
   const router = useRouter();
   const template = useMemo(() => getSpreadsheetTemplate(work.template_key), [work.template_key]);
 
@@ -41,7 +48,11 @@ export function SpreadsheetWorkEditor({ work }: { work: StudentWork }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const isLocked = status === "SUBMITTED" || status === "APPROVED";
+  const isLocked = readOnly || status === "SUBMITTED" || status === "APPROVED";
+  // Inclui RETURNED pelo mesmo motivo do editor de documentos (Fase 9.6):
+  // é o estado em que o aluno mais precisa ver a avaliação e os comentários.
+  const hasSubmission =
+    readOnly || status === "SUBMITTED" || status === "APPROVED" || status === "RETURNED";
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestPayloadRef = useRef<{ title: string; content: SpreadsheetWorkContent } | null>(
     null
@@ -158,12 +169,19 @@ export function SpreadsheetWorkEditor({ work }: { work: StudentWork }) {
 
       {template && <p className="mt-1 text-sm text-muted">{template.description}</p>}
 
-      {isLocked && (
+      {isLocked && status !== "RETURNED" && (
         <p className="mt-3 rounded-md bg-primary-light px-3 py-2 text-sm text-primary-dark print:hidden">
           Esta planilha já foi entregue e não pode mais ser editada.
         </p>
       )}
-      {isLocked && <WorkEvaluationPanel workId={work.id} />}
+      {status === "RETURNED" && !readOnly && (
+        <p className="mt-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger print:hidden">
+          Esta planilha foi devolvida pelo professor. Reveja o feedback abaixo, ajuste o que for
+          necessário e entregue novamente.
+        </p>
+      )}
+      {hasSubmission && <WorkEvaluationPanel workId={work.id} />}
+      {hasSubmission && <WorkCommentsThread workId={work.id} />}
 
       {!isLocked && (
         <p className="mt-3 text-xs text-muted print:hidden">
@@ -218,7 +236,7 @@ export function SpreadsheetWorkEditor({ work }: { work: StudentWork }) {
           disabled={submitting}
           className="mt-6 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60 print:hidden"
         >
-          {submitting ? "Entregando…" : "Entregar planilha"}
+          {submitting ? "Entregando…" : status === "RETURNED" ? "Entregar novamente" : "Entregar planilha"}
         </button>
       )}
     </div>
