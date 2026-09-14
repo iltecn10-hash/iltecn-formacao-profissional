@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { DocumentWorkContent, StudentWork } from "@/types";
 import { getFieldDefs, getDocumentTemplate } from "@/lib/document-templates";
 import { RichField } from "./rich-field";
+import { WorkEvaluationPanel } from "@/components/work-evaluation-panel";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -157,6 +158,7 @@ export function DocumentWorkEditor({ work }: { work: StudentWork }) {
           Este documento já foi entregue e não pode mais ser editado.
         </p>
       )}
+      {isLocked && <WorkEvaluationPanel workId={work.id} />}
 
       <div id="document-print-area" className="mt-6 flex flex-col gap-5">
         {fieldDefs.map((field) => {

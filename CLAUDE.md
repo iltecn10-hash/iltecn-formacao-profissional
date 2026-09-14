@@ -267,10 +267,53 @@ necessário para as atividades profissionais previstas).
 - Ainda **não implementado**: avaliação automática/manual do conteúdo do trabalho (9.5),
   dashboard do professor "Trabalhos dos Alunos" (9.6).
 
+### 9.5 — Entrega e avaliação (concluída em 2026-09-14)
+
+- Nenhuma migration nova: a tabela `work_evaluations` já existia desde a 9.1
+  (`evaluator_id`, `evaluation_type`, `score`, `passed`, `feedback`, `details`), só ainda
+  não era usada. A entrega (`submitStudentWork`) passou a gravar, na mesma transação que
+  trava o trabalho, uma avaliação automática (`evaluation_type = 'AUTO'`, `evaluator_id =
+  NULL`) — calculada uma única vez, sobre o conteúdo que acabou de ser travado, e nunca
+  recalculada depois (mesmo que a régua de avaliação mude no futuro).
+- Motor de avaliação em `src/lib/work-evaluation.ts` — deliberadamente sobre
+  **completude/estrutura**, não qualidade de redação:
+  - **Documento:** usa os mesmos `fieldDefs` do modelo (seção 5, `document-templates.ts`);
+    conta como preenchido um campo de texto/data não vazio (`.trim()`) ou um campo richtext
+    com pelo menos um nó de texto real no JSON do Tiptap (parágrafo vazio não conta). Um
+    campo sem `required` explícito conta como obrigatório para avaliação — cobre o
+    documento livre, cujo único campo (`FREEFORM_BODY_FIELD`) não declara `required` por
+    não ter modelo pedagógico. `score` = % de campos obrigatórios preenchidos; `passed` =
+    todos preenchidos.
+  - **Planilha:** compara `content.cells` com o esqueleto do modelo (`spreadsheet-
+    templates.ts`) para contar só as células que o aluno preencheu/alterou (dados
+    próprios, não cabeçalho); reaproveita `evaluateGrid()` da 9.3 para achar fórmulas com
+    erro. `passed` exige pelo menos 3 células de dados do aluno **e** nenhuma fórmula com
+    `#ERRO`. Planilha livre (sem modelo) conta toda célula preenchida como dado do aluno,
+    já que não há esqueleto para descontar.
+  - Para os dois tipos, a função sempre retorna um resultado (nunca `null`) — a régua muda
+    conforme o tipo/modelo, mas há sempre algo objetivo pra medir, mesmo em trabalho livre.
+- Nova API: `GET /api/student-works/[id]/evaluations` (mesmo padrão de autorização de
+  `/versions`: o próprio aluno dono ou qualquer perfil de equipe) — lista as avaliações do
+  trabalho, mais recente primeiro. A Fase 9.6 vai inserir avaliações `MANUAL` na mesma
+  tabela/rota, sem mudar esse contrato.
+- UI: `src/components/work-evaluation-panel.tsx` (novo, compartilhado pelos dois editores)
+  busca essa rota e mostra nota/aprovação/feedback assim que o trabalho é travado —
+  aparece nos dois editores (`document-work-editor.tsx`, `spreadsheet-work-editor.tsx`)
+  logo abaixo do aviso "já foi entregue".
+- Testes novos: `tests/unit/work-evaluation.test.ts` (motor de avaliação isolado — memorando
+  com campos faltando/completos, espaço em branco não conta como preenchido, documento e
+  planilha livres, planilha com fórmula em erro) e
+  `tests/integration/work-evaluation-submit.test.ts` (via pg-mem: `submitStudentWork` grava
+  a avaliação AUTO corretamente e não duplica em entregas repetidas). 11 testes novos, 82
+  no total, todos passando; `npm run lint` e `npm run build` sem erros.
+- Ainda **não implementado**: avaliação **manual** do professor (registro `MANUAL` na
+  mesma tabela, com `evaluator_id` preenchido) e o dashboard "Trabalhos dos Alunos" para
+  ele acessar/comentar/avaliar (9.6).
+
 ### Próximas subfases
 
-9.5 Entrega e avaliação → 9.6 Integração com professor → 9.7 Testes e refinamento. Cada
-uma só deve avançar depois da anterior estar validada (testes + build passando).
+9.6 Integração com professor → 9.7 Testes e refinamento. Cada uma só deve avançar depois
+da anterior estar validada (testes + build passando).
 
 ## Comandos
 

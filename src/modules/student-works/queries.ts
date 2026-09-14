@@ -1,6 +1,7 @@
 import { pool, query, queryOne } from "@/lib/db";
-import type { StudentWork, StudentWorkVersion, WorkType } from "@/types";
+import type { StudentWork, StudentWorkVersion, WorkEvaluation, WorkType } from "@/types";
 import { sanitizeJsonValue } from "@/lib/sanitize-json";
+import { evaluateStudentWork } from "@/lib/work-evaluation";
 
 const STUDENT_WORK_COLUMNS = `
   id, student_id, mission_id, mission_attempt_id, work_type, title,
@@ -254,6 +255,17 @@ export async function submitStudentWork(
       [workId, studentId]
     );
 
+    // Avaliação automática (Fase 9.5): roda uma única vez, na entrega, sobre
+    // o conteúdo que acabou de ser travado — nunca recalculada depois, para
+    // não mudar de nota por baixo dos pés do aluno se a régua evoluir.
+    const auto = evaluateStudentWork(work.work_type, work.template_key, work.content);
+    await client.query(
+      `INSERT INTO work_evaluations
+         (student_work_id, evaluator_id, evaluation_type, score, passed, feedback, details)
+       VALUES ($1, NULL, 'AUTO', $2, $3, $4, $5::jsonb)`,
+      [work.id, auto.score, auto.passed, auto.feedback, JSON.stringify(auto.details)]
+    );
+
     await client.query("COMMIT");
     return result.rows[0];
   } catch (err) {
@@ -262,6 +274,18 @@ export async function submitStudentWork(
   } finally {
     client.release();
   }
+}
+
+/** Avaliações (automática e, a partir da Fase 9.6, manual) de um trabalho. */
+export async function listWorkEvaluations(workId: string): Promise<WorkEvaluation[]> {
+  return query<WorkEvaluation>(
+    `SELECT id, student_work_id, evaluator_id, evaluation_type, score, passed,
+            feedback, details, created_at
+     FROM work_evaluations
+     WHERE student_work_id = $1
+     ORDER BY created_at DESC`,
+    [workId]
+  );
 }
 
 export async function listStudentWorkVersions(

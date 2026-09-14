@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { SpreadsheetWorkContent, StudentWork } from "@/types";
 import { getInitialGrid, getSpreadsheetTemplate } from "@/lib/spreadsheet-templates";
 import { SpreadsheetGrid } from "./spreadsheet-grid";
+import { WorkEvaluationPanel } from "@/components/work-evaluation-panel";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -162,6 +163,7 @@ export function SpreadsheetWorkEditor({ work }: { work: StudentWork }) {
           Esta planilha já foi entregue e não pode mais ser editada.
         </p>
       )}
+      {isLocked && <WorkEvaluationPanel workId={work.id} />}
 
       {!isLocked && (
         <p className="mt-3 text-xs text-muted print:hidden">
