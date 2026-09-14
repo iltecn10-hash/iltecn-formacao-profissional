@@ -217,6 +217,18 @@ export interface Competency {
   description: string | null;
 }
 
+/**
+ * Configuração de trabalho declarada pela própria missão (Fase 9.4):
+ * substitui a escolha manual de missão/modelo que existia nos formulários
+ * "Novo documento"/"Nova planilha" da 9.2/9.3. `templateKey: null` significa
+ * "planilha/documento livre, sem modelo pedagógico pré-definido". Uma
+ * missão sem `work_config` (`null`) não tem trabalho associado.
+ */
+export interface MissionWorkConfig {
+  workType: WorkType;
+  templateKey: string | null;
+}
+
 export interface Mission {
   id: string;
   module_id: string;
@@ -229,6 +241,7 @@ export interface Mission {
   sort_order: number;
   active: boolean;
   resource_url: string | null;
+  work_config: MissionWorkConfig | null;
 }
 
 export interface MissionTask {

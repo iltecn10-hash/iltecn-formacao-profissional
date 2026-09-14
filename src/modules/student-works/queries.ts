@@ -264,18 +264,6 @@ export async function submitStudentWork(
   }
 }
 
-/**
- * Lista simples de missões ativas para o aluno escolher ao criar um trabalho
- * avulso (seção "Meus Trabalhos"). Temporário: a partir da Fase 9.4, a
- * missão vai declarar seu próprio `work_type`/modelo e essa escolha manual
- * deixa de ser necessária.
- */
-export async function listMissionsForNewWork(): Promise<{ id: string; title: string }[]> {
-  return query<{ id: string; title: string }>(
-    `SELECT id, title FROM missions WHERE active ORDER BY title ASC`
-  );
-}
-
 export async function listStudentWorkVersions(
   workId: string
 ): Promise<StudentWorkVersion[]> {

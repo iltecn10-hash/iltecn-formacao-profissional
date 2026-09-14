@@ -9,7 +9,7 @@ import type {
 export async function listMissionsByModule(moduleId: string): Promise<Mission[]> {
   return query<Mission>(
     `SELECT id, module_id, title, context, objective, level, points_value,
-            estimated_minutes, sort_order, active, resource_url
+            estimated_minutes, sort_order, active, resource_url, work_config
      FROM missions WHERE module_id = $1 ORDER BY sort_order ASC`,
     [moduleId]
   );
@@ -37,7 +37,7 @@ export async function createMission(input: CreateMissionInput): Promise<Mission>
       `INSERT INTO missions (module_id, title, context, objective, level, points_value, sort_order, resource_url)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, module_id, title, context, objective, level, points_value,
-                 estimated_minutes, sort_order, active, resource_url`,
+                 estimated_minutes, sort_order, active, resource_url, work_config`,
       [
         input.moduleId,
         input.title,
@@ -130,6 +130,7 @@ export async function getStudentProgress(studentId: string): Promise<TrackWithMo
       >(
         `SELECT m.id, m.module_id, m.title, m.context, m.objective, m.level,
                 m.points_value, m.estimated_minutes, m.sort_order, m.active, m.resource_url,
+                m.work_config,
                 COALESCE(ma.status, 'disponivel') AS status,
                 ma.submission_url,
                 COALESCE(

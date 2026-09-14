@@ -220,12 +220,57 @@ necessário para as atividades profissionais previstas).
   (9.4 — a escolha manual de missão/modelo nos dois formulários é temporária), avaliação
   automática do conteúdo (9.5), dashboard do professor (9.6).
 
+### 9.4 — Integração com missões (concluída em 2026-09-14)
+
+- Migration aditiva em produção (Neon, sem perda/alteração de dados existentes):
+  `ALTER TABLE missions ADD COLUMN work_config JSONB DEFAULT NULL` (id da migration
+  `78749234-3b77-480a-a593-935e57b07ccb`, testada antes numa branch temporária via
+  `prepare_database_migration`/`complete_database_migration`, só aplicada após confirmação
+  explícita do usuário). `MissionWorkConfig = { workType: 'DOCUMENT'|'SPREADSHEET',
+  templateKey: string|null }` (ver `src/types/index.ts`); `work_config = null` significa
+  "esta missão não tem trabalho associado". Populados 9 das 14 missões existentes com o
+  tipo/modelo correspondente (ex. "Memorando: Mudança no Horário de Almoço" →
+  `{workType:"DOCUMENT",templateKey:"memorando"}`, "Fechamento de Caixa do Dia" →
+  `{workType:"SPREADSHEET",templateKey:"fechamento_caixa"}`); as outras 5 (Backup em
+  Pendrive, Pesquisa de Fornecedores, Primeira Venda no Caixa, Organização da Pasta de
+  Trabalho e uma missão com título incompleto) ficaram com `work_config = NULL` de
+  propósito, por não terem um documento/planilha correspondente óbvio.
+- `listMissionsByModule` e a subquery de missões de `getStudentProgress`
+  (`src/modules/missions/queries.ts`) passaram a selecionar `work_config`; `Mission` em
+  `src/types/index.ts` ganhou o campo `work_config: MissionWorkConfig | null`.
+- `MissionCard` (`src/components/mission-card.tsx`) ganhou o botão "Abrir documento/planilha
+  da missão" quando `workConfig` não é nulo e a missão não está bloqueada: chama
+  `POST /api/student-works` com `missionId`/`workType`/`templateKey` da própria missão (sem
+  perguntar nada ao aluno) e navega para o editor — reaproveita 100% o
+  `getOrCreateStudentWork` idempotente da 9.1, nenhuma API nova.
+- `/dashboard/trabalhos` ("Meus Trabalhos") deixou de ter os formulários "Novo
+  documento"/"Nova planilha" com escolha manual de missão/modelo (eram temporários desde a
+  9.2/9.3) e virou uma página só de listagem, com um aviso apontando para "Missões" como
+  o lugar onde os trabalhos são criados. Removidos por não terem mais uso:
+  `src/components/student-works/new-document-form.tsx`,
+  `src/components/student-works/new-spreadsheet-form.tsx` e a função
+  `listMissionsForNewWork` em `src/modules/student-works/queries.ts`.
+- Testes: `tests/integration/mission-work-config.test.ts` (novo) — confirma que
+  `listMissionsByModule` devolve `work_config` como objeto (não como string JSON crua) e
+  como `null` quando a missão não declara. `tests/setup/testDb.ts` precisou ser expandido
+  (schema de `tracks`/`modules`/`missions` estava desatualizado em relação à produção —
+  faltavam colunas como `active`, `description`, `sort_order`, `context`, `objective`,
+  entre outras, verificado via `describe_table_schema`). Não foi possível testar
+  `getStudentProgress` com a nova coluna em pg-mem: a query combina `LEFT JOIN
+  mission_attempts` com uma subquery correlacionada (`array_agg` de competências) que o
+  pg-mem não resolve (`column "m.id" does not exist`), limitação já documentada abaixo em
+  "Decisões técnicas" — a query já roda normalmente em produção (Postgres real) e é
+  anterior à 9.4; a cobertura da coluna nova ficou com `listMissionsByModule`, que usa a
+  mesma coluna sem essa combinação problemática. 71 testes no total (70 da 9.3 + 1 novo,
+  já que um segundo teste planejado para `getStudentProgress` não pôde rodar em pg-mem);
+  `npm run lint` e `npm run build` (com `DATABASE_URL` fictícia) sem erros.
+- Ainda **não implementado**: avaliação automática/manual do conteúdo do trabalho (9.5),
+  dashboard do professor "Trabalhos dos Alunos" (9.6).
+
 ### Próximas subfases
 
-9.4 Integração com missões (campo de configuração em `missions`, ex. `work_config JSONB`,
-substituindo a escolha manual de missão/modelo da 9.2/9.3) → 9.5 Entrega e avaliação → 9.6
-Integração com professor → 9.7 Testes e refinamento. Cada uma só deve avançar depois da
-anterior estar validada (testes + build passando).
+9.5 Entrega e avaliação → 9.6 Integração com professor → 9.7 Testes e refinamento. Cada
+uma só deve avançar depois da anterior estar validada (testes + build passando).
 
 ## Comandos
 

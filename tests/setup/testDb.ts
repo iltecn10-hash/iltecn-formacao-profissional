@@ -42,13 +42,19 @@ export function createTestDb() {
     CREATE TABLE tracks (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name VARCHAR(255) NOT NULL,
-      slug VARCHAR(100) NOT NULL
+      slug VARCHAR(100) NOT NULL,
+      description TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      active BOOLEAN NOT NULL DEFAULT true
     );
 
     CREATE TABLE modules (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       track_id UUID NOT NULL REFERENCES tracks(id),
-      name VARCHAR(255) NOT NULL
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      active BOOLEAN NOT NULL DEFAULT true
     );
 
     CREATE TABLE competencies (
@@ -60,8 +66,15 @@ export function createTestDb() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       module_id UUID NOT NULL REFERENCES modules(id),
       title VARCHAR(255) NOT NULL,
+      context TEXT,
+      objective TEXT,
+      level INTEGER NOT NULL DEFAULT 1,
       points_value INTEGER NOT NULL DEFAULT 100,
-      active BOOLEAN NOT NULL DEFAULT true
+      estimated_minutes INTEGER,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      active BOOLEAN NOT NULL DEFAULT true,
+      resource_url TEXT,
+      work_config JSONB
     );
 
     CREATE TABLE mission_competencies (

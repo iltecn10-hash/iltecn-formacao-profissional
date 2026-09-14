@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { MissionAttemptStatus } from "@/types";
+import type { MissionAttemptStatus, MissionWorkConfig } from "@/types";
 
 const statusLabel: Record<MissionAttemptStatus, string> = {
   bloqueada: "Bloqueada",
@@ -30,6 +30,7 @@ export function MissionCard({
   status,
   resourceUrl,
   submissionUrl,
+  workConfig,
 }: {
   id: string;
   title: string;
@@ -40,12 +41,44 @@ export function MissionCard({
   status: MissionAttemptStatus;
   resourceUrl: string | null;
   submissionUrl: string | null;
+  workConfig: MissionWorkConfig | null;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [openingWork, setOpeningWork] = useState(false);
+  const [workError, setWorkError] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState(status);
   const [submission, setSubmission] = useState(submissionUrl ?? "");
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Cria o trabalho da missão se ainda não existir, ou apenas retorna o
+   * existente (`getOrCreateStudentWork` é idempotente), e abre o editor.
+   * Substitui a escolha manual de missão/modelo dos formulários da 9.2/9.3
+   * (seção "Fase 9.4 — Integração com missões").
+   */
+  async function handleOpenWork() {
+    if (!workConfig) return;
+    setWorkError(null);
+    setOpeningWork(true);
+    const res = await fetch("/api/student-works", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        missionId: id,
+        workType: workConfig.workType,
+        templateKey: workConfig.templateKey ?? undefined,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setOpeningWork(false);
+    if (!res.ok) {
+      setWorkError(data.error ?? "Não foi possível abrir o trabalho desta missão.");
+      return;
+    }
+    const kind = workConfig.workType === "DOCUMENT" ? "documento" : "planilha";
+    router.push(`/dashboard/trabalhos/${kind}/${data.work.id}`);
+  }
 
   async function handleStart() {
     setLoading(true);
@@ -118,6 +151,24 @@ export function MissionCard({
         >
           Baixar arquivo modelo
         </a>
+      )}
+
+      {workConfig && currentStatus !== "bloqueada" && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={handleOpenWork}
+            disabled={openingWork}
+            className="rounded-md border border-primary px-3.5 py-2 text-sm font-medium text-primary transition hover:bg-primary-light disabled:opacity-60"
+          >
+            {openingWork
+              ? "Abrindo…"
+              : workConfig.workType === "DOCUMENT"
+                ? "Abrir documento da missão"
+                : "Abrir planilha da missão"}
+          </button>
+          {workError && <p className="mt-1.5 text-sm text-danger">{workError}</p>}
+        </div>
       )}
 
       <div className="mt-4">
