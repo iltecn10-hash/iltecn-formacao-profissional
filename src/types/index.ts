@@ -271,3 +271,64 @@ export interface TrackWithModules extends Track {
   modules: ModuleWithMissions[];
   progress_percent: number;
 }
+
+// ---- Fase 9: Laboratório Prático de Documentos e Planilhas ----
+
+export type WorkType = "DOCUMENT" | "SPREADSHEET";
+
+export type StudentWorkStatus =
+  | "DRAFT"
+  | "IN_PROGRESS"
+  | "SUBMITTED"
+  | "RETURNED"
+  | "APPROVED";
+
+export interface StudentWork {
+  id: string;
+  student_id: string;
+  mission_id: string;
+  mission_attempt_id: string | null;
+  work_type: WorkType;
+  title: string;
+  template_key: string | null;
+  content: Record<string, unknown>;
+  status: StudentWorkStatus;
+  version: number;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  mission_title?: string;
+  student_name?: string;
+}
+
+export interface StudentWorkVersion {
+  id: string;
+  student_work_id: string;
+  version: number;
+  content: Record<string, unknown>;
+  label: string | null;
+  created_at: string;
+}
+
+export type WorkEvaluationType = "AUTO" | "MANUAL";
+
+export interface WorkEvaluation {
+  id: string;
+  student_work_id: string;
+  evaluator_id: string | null;
+  evaluation_type: WorkEvaluationType;
+  score: number | null;
+  passed: boolean | null;
+  feedback: string | null;
+  details: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface WorkComment {
+  id: string;
+  student_work_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  author_name?: string;
+}

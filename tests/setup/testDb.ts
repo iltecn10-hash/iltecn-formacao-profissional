@@ -12,6 +12,7 @@ export function createTestDb() {
   db.public.registerFunction({
     name: "gen_random_uuid",
     returns: DataType.uuid,
+    impure: true, // cada chamada deve gerar um UUID novo, nunca ser cacheada/constant-folded
     implementation: () => randomUUID(),
   });
 
@@ -179,6 +180,53 @@ export function createTestDb() {
       quantity INTEGER NOT NULL,
       reason VARCHAR(255),
       user_id UUID REFERENCES users(id)
+    );
+
+    CREATE TABLE student_works (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_id UUID NOT NULL REFERENCES students(id),
+      mission_id UUID NOT NULL REFERENCES missions(id),
+      mission_attempt_id UUID REFERENCES mission_attempts(id),
+      work_type VARCHAR(20) NOT NULL,
+      title VARCHAR(255) NOT NULL DEFAULT '',
+      template_key VARCHAR(50),
+      content JSONB NOT NULL DEFAULT '{}',
+      status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+      version INTEGER NOT NULL DEFAULT 1,
+      submitted_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT now(),
+      updated_at TIMESTAMP DEFAULT now(),
+      UNIQUE(student_id, mission_id, work_type)
+    );
+
+    CREATE TABLE student_work_versions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_work_id UUID NOT NULL REFERENCES student_works(id),
+      version INTEGER NOT NULL,
+      content JSONB NOT NULL,
+      label VARCHAR(50),
+      created_at TIMESTAMP DEFAULT now(),
+      UNIQUE(student_work_id, version)
+    );
+
+    CREATE TABLE work_evaluations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_work_id UUID NOT NULL REFERENCES student_works(id),
+      evaluator_id UUID REFERENCES users(id),
+      evaluation_type VARCHAR(20) NOT NULL,
+      score INTEGER,
+      passed BOOLEAN,
+      feedback TEXT,
+      details JSONB,
+      created_at TIMESTAMP DEFAULT now()
+    );
+
+    CREATE TABLE work_comments (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_work_id UUID NOT NULL REFERENCES student_works(id),
+      author_id UUID NOT NULL REFERENCES users(id),
+      body TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT now()
     );
   `);
 
