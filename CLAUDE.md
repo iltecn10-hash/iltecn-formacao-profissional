@@ -203,11 +203,22 @@ necessário para as atividades profissionais previstas).
   erros; `npm run build` limpo (precisa de `DATABASE_URL` definida no ambiente — mesmo em
   um valor fictício — porque o `pg.Pool` é criado no import do módulo `db.ts`; não conecta
   de fato nesse momento, só na primeira query).
+- Verificação manual (seção 36) feita direto na Vercel de produção: criação de uma planilha
+  "Fechamento de Caixa" pelo aluno de teste, edição de células literais e de fórmulas
+  (`=SOMA(...)`, referência entre células, divisão por zero mostrando `#ERRO` em vermelho),
+  recálculo automático confirmado, "+ Linha"/"+ Coluna", autosave confirmado após reload,
+  entrega, e confirmação de que a edição fica bloqueada depois de entregue.
+- Observação de código encontrada durante o teste (não chega a ser um bug alcançável pelo
+  usuário real): `addRow`/`addColumn` em `spreadsheet-work-editor.tsx` calculam o próximo
+  estado a partir da variável `content` capturada no fechamento do componente. Disparar as
+  duas funções na mesma revalidação do React (só possível programaticamente, ex. dois
+  `.click()` seguidos sem aguardar o re-render) faz uma sobrescrever a outra. Cliques reais
+  do usuário sempre têm um ciclo de renderização entre eles, então não reproduz na prática;
+  mesmo assim, o ideal seria trocar para a forma funcional do `setState`
+  (`setContent(prev => ({ ...prev, rows: prev.rows + 1 }))`) na 9.7 (testes e refinamento).
 - Ainda **não implementado**: integração real com `work_type`/modelo declarado pela missão
   (9.4 — a escolha manual de missão/modelo nos dois formulários é temporária), avaliação
-  automática do conteúdo (9.5), dashboard do professor (9.6). Verificação manual em
-  produção (seção 36) ainda **pendente** para esta subfase — só a criação de documento foi
-  testada ao vivo até agora.
+  automática do conteúdo (9.5), dashboard do professor (9.6).
 
 ### Próximas subfases
 
