@@ -613,6 +613,26 @@ engineering.
   nenhuma mudança de código (a `MissionTaskVideoForm` da 10.3 já tem o campo Provedor
   pronto para essa troca).
 
+#### Correções pós-entrega da 10.4
+
+- **`moov` no fim do arquivo (vídeo travava/carregava infinito)**: o primeiro mux com
+  `ffmpeg -c copy` não usava `-movflags +faststart`, então o átomo `moov` (metadados)
+  ficava depois do `mdat` (dados de mídia) — navegadores não conseguem começar a tocar
+  antes de baixar o arquivo inteiro nesse layout. Corrigido remuxando os 7 arquivos com
+  `-movflags +faststart` (confirmado por inspeção binária dos boxes: `ftyp → moov →
+  free → mdat`).
+- **Voz "falhando"/distorcendo durante a narração**: causado por *clipping* digital na
+  síntese da voz `mb-br4` (mbrola) — confirmado via `ffmpeg -af astats` mostrando pico
+  exatamente em 0.0 dB (batendo no teto) e um "flat factor" alto (amostras cortadas no
+  topo) nas 7 narrações, junto com avisos do próprio mbrola ("Saturation on ...")
+  durante a síntese. Corrigido em `build.py`: (1) reduzida a amplitude de síntese do
+  espeak-ng de 100 (padrão) para `-a 78`, o suficiente para a voz não estourar o teto
+  digital; (2) adicionado um passo de normalização (`ffmpeg -af
+  loudnorm=I=-18:TP=-1.5:LRA=11`) depois da síntese, para deixar o volume consistente
+  entre os 7 vídeos e garantir margem contra qualquer novo clipping (pico final ficou
+  em torno de -1,5 dBTP em todos, sem distorção). Os 7 vídeos foram regerados do zero
+  (mesmos roteiros/slides, só a narração mudou) e o `+faststart` foi mantido.
+
 ## Comandos
 
 ```bash
