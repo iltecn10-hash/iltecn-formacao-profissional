@@ -386,12 +386,25 @@ necessário para as atividades profissionais previstas).
     vez no mount e é reaproveitado num fluxo onde o status/conteúdo muda por baixo dele
     (sem trocar de página) precisa de uma estratégia explícita de refetch — `key` quando
     dá para remontar sem custo, reload completo quando não há estado a preservar.
+- **Observação não bloqueante encontrada ao validar a correção do item 2 acima:** logo
+  após o aluno reentregar um trabalho `RETURNED` (transição de status via `key`), a tela
+  mostrou por alguns instantes as avaliações **duplicadas** (cada uma renderizada duas
+  vezes) — confirmado no banco (`work_evaluations`) que os dados estavam corretos o
+  tempo todo, sem nenhuma linha duplicada; um reload completo da página já mostra a
+  lista certa, uma vez cada. Aparenta ser um artefato transitório do
+  desmonte/remonte via `key` coincidindo com o `router.refresh()` do próprio
+  `handleSubmitWork` (duas atualizações da árvore quase simultâneas). Não bloqueia a
+  9.6 — o dado nunca esteve errado, só a tela durante uma janela curta — mas vale
+  investigar na 9.7 se compensa trocar a estratégia de refetch por algo que não dependa
+  de remontar o componente (ex.: um contador de versão em estado do componente pai,
+  incrementado explicitamente após o submit, passado como prop em vez de `key`).
 
 ### Próximas subfases
 
-9.7 Testes e refinamento (última subfase da Fase 9) — inclui revisitar a observação não
-bloqueante de closure obsoleto em `addRow`/`addColumn` do `spreadsheet-work-editor.tsx`
-já registrada no relatório da 9.3.
+9.7 Testes e refinamento (última subfase da Fase 9) — inclui revisitar: (1) a observação
+não bloqueante de closure obsoleto em `addRow`/`addColumn` do
+`spreadsheet-work-editor.tsx` já registrada no relatório da 9.3; (2) a duplicação visual
+transitória pós-reentrega registrada acima, na 9.6.
 
 ## Comandos
 
