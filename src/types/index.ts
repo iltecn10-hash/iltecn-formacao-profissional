@@ -251,6 +251,35 @@ export interface MissionTask {
   sort_order: number;
 }
 
+// ---- Fase 10: vídeos didáticos por etapa ----
+
+/**
+ * Arquitetura preparada para múltiplas origens (item 10 do aditivo), mas por
+ * ora só YOUTUBE tem player embutido no simulador (10.2); as demais caem
+ * para um link "assistir" simples até serem implementadas.
+ */
+export type VideoProvider = "YOUTUBE" | "VIMEO" | "CLOUD_STORAGE" | "INTERNAL";
+
+export type VideoType = "EXPLICATIVO" | "DEMONSTRATIVO" | "EXEMPLO" | "ORIENTACAO";
+
+export interface MissionTaskVideo {
+  id: string;
+  mission_task_id: string;
+  title: string;
+  description: string | null;
+  video_url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  provider: VideoProvider;
+  video_type: VideoType;
+  active: boolean;
+}
+
+/** Uma etapa (`MissionTask`) com o vídeo associado, se houver (no máximo um por etapa). */
+export interface MissionTaskWithVideo extends MissionTask {
+  video: MissionTaskVideo | null;
+}
+
 export type MissionAttemptStatus =
   | "bloqueada"
   | "disponivel"

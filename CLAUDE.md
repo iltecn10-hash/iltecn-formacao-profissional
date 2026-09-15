@@ -49,10 +49,11 @@ tests/
 scripts/seed.ts       — cria admin + escola modelo
 ```
 
-## Modelo de dados (produção — 32 tabelas)
+## Modelo de dados (produção — 33 tabelas)
 
 Fundação: `users`, `schools`, `teachers`, `coordinators`, `students`, `classes`, `enrollments`
 Formação/Missões: `tracks`, `modules`, `competencies`, `missions`, `mission_tasks`, `mission_competencies`, `mission_attempts`, `student_competencies`, `scores`
+**Vídeos didáticos por etapa (Fase 10):** `mission_task_videos`
 E-mail simulado: `internal_messages`
 Supermercado: `categories`, `products`, `suppliers`, `customers`, `cash_registers`, `sales`, `sale_items`, `inventory_movements`, `accounts_payable`, `accounts_receivable`
 Gamificação: `achievements`, `student_achievements`
@@ -445,8 +446,70 @@ migration, rota ou schema mudou.
 ### Próximas subfases
 
 Fase 9 (Laboratório Prático de Documentos e Planilhas) concluída com a 9.7 — todas as
-sete subfases (9.1 a 9.7) entregues, testadas e verificadas em produção. Próxima fase a
-definir com o usuário.
+sete subfases (9.1 a 9.7) entregues, testadas e verificadas em produção.
+
+## Fase 10 — Vídeos Didáticos nas Missões
+
+Aditivo do usuário: cada etapa de uma missão pode ter um vídeo curto explicando a
+tarefa, seguindo o fluxo pedagógico "LER → ASSISTIR → PRATICAR → CONCLUIR". O vídeo é um
+recurso opcional (nunca obrigatório para concluir a missão) que complementa o manual, não
+o substitui.
+
+### 10.1 — Infraestrutura de vídeo (concluída em 2026-09-15)
+
+Antes de implementar, foi feito o levantamento pedido pelo próprio aditivo (analisar
+estrutura atual, verificar `resource_url`, verificar armazenamento de missão, evitar
+duplicação). Achado principal: `missions.resource_url` é um link único por missão
+inteira (não por etapa) e `mission_tasks` (id, mission_id, description, sort_order) já
+existe no banco desde o início do projeto, mas **nunca foi lida em lugar nenhum da
+interface** — só era gravada na criação da missão (textarea "Tarefas" do
+`mission-form.tsx`) e nunca exibida a nenhum aluno. Ou seja, "etapa" ainda não era um
+conceito visível; a missão era (e continua sendo, até a 10.2) um cartão único.
+
+Escopo desta subfase, deliberadamente mínimo (item 17 do aditivo — "criar a menor
+estrutura necessária"): só a infraestrutura de dados e API, sem nenhuma tela nova. A
+tela do aluno (exibir as etapas + player) fica para a 10.2; o formulário do professor
+para gerenciar vídeos fica para a 10.3.
+
+- Nova tabela `mission_task_videos` (metadados apenas — item 9 do aditivo, nada de
+  arquivo de vídeo no Postgres): `mission_task_id` (FK única — só um vídeo por etapa por
+  vez; "trocar vídeo" no item 8 já indica substituição, não acúmulo), `title`,
+  `description`, `video_url`, `thumbnail_url`, `duration_seconds`, `provider`
+  (`YOUTUBE`/`VIMEO`/`CLOUD_STORAGE`/`INTERNAL`, CHECK constraint, default `YOUTUBE` —
+  arquitetura multi-provedor do item 10, mas só `YOUTUBE` terá player embutido na 10.2),
+  `video_type` (`EXPLICATIVO`/`DEMONSTRATIVO`/`EXEMPLO`/`ORIENTACAO`, CHECK constraint,
+  default `DEMONSTRATIVO` — taxonomia do item 3), `active`.
+- `src/modules/missions/queries.ts` ganhou `getMissionTaskById`,
+  `listMissionTasksWithVideo(missionId)` (etapas + vídeo associado, com `video: null`
+  quando não houver — duas consultas simples em vez de JOIN com agregação em JSON, para
+  não depender de função do Postgres que precisaria ser replicada no pg-mem dos testes),
+  `upsertMissionTaskVideo` (insere ou substitui via `ON CONFLICT (mission_task_id)`) e
+  `deleteMissionTaskVideo`.
+- Novas rotas: `GET /api/missions/[id]/tasks` (lista etapas + vídeo; qualquer usuário
+  autenticado — não é dado sensível, e tanto aluno quanto equipe vão precisar ler);
+  `PUT`/`DELETE /api/missions/[id]/tasks/[taskId]/video` (só
+  admin/professor/coordenador; confere que a etapa pertence mesmo à missão da URL antes
+  de gravar, devolvendo 404 caso contrário).
+- `tests/setup/testDb.ts` (pg-mem) ganhou `mission_tasks` — que já existia em produção
+  mas nunca tinha sido adicionada ao banco de teste em memória, então nenhuma consulta
+  que a envolvesse era testável antes — e `mission_task_videos`. 10 testes novos (97 no
+  total): consultas em `tests/integration/mission-task-videos.test.ts` (listar com/sem
+  vídeo, upsert cria e depois substitui em vez de duplicar, delete volta a `null`,
+  `getMissionTaskById` inexistente devolve `null`) e autorização das novas rotas em
+  `tests/unit/api-authorization.test.ts` (aluno barrado com 403, equipe autorizada,
+  etapa de outra missão devolve 404). `npx tsc --noEmit`, `npm run lint`,
+  `npx vitest run` (97/97) e `npm run build` sem erros.
+- Nada da Fase 9 foi alterado; `resource_url` e `work_config` continuam funcionando como
+  antes.
+
+### Próximas subfases (Fase 10)
+
+10.2 Tela do aluno: exibir as etapas da missão pela primeira vez, com player embutido
+(YouTube) quando houver vídeo e botão "Assistir novamente", sem bloquear a conclusão da
+missão (item 4 do aditivo).
+10.3 CRUD do professor/admin para adicionar/editar/remover/ativar/desativar/trocar o
+vídeo de uma etapa.
+10.4 Aplicar na missão piloto "Relatório de Vendas do Mês" (item 14 do aditivo).
 
 ## Comandos
 

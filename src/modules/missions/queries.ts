@@ -3,7 +3,11 @@ import type {
   Mission,
   MissionTask,
   MissionAttemptStatus,
+  MissionTaskVideo,
+  MissionTaskWithVideo,
   TrackWithModules,
+  VideoProvider,
+  VideoType,
 } from "@/types";
 
 export async function listMissionsByModule(moduleId: string): Promise<Mission[]> {
@@ -84,6 +88,104 @@ export async function listMissionTasks(missionId: string): Promise<MissionTask[]
      FROM mission_tasks WHERE mission_id = $1 ORDER BY sort_order ASC`,
     [missionId]
   );
+}
+
+export async function getMissionTaskById(taskId: string): Promise<MissionTask | null> {
+  return queryOne<MissionTask>(
+    `SELECT id, mission_id, description, sort_order FROM mission_tasks WHERE id = $1`,
+    [taskId]
+  );
+}
+
+// ---- Fase 10.1: vídeos didáticos por etapa ----
+
+const VIDEO_COLUMNS = `id, mission_task_id, title, description, video_url, thumbnail_url,
+                        duration_seconds, provider, video_type, active`;
+
+/**
+ * Etapas (`mission_tasks`) de uma missão, cada uma com o vídeo associado (se
+ * houver). `mission_tasks` já existia desde o início do projeto mas nunca
+ * tinha sido exposta para o aluno — esta é a primeira vez que a etapa em si
+ * vira um dado lido pela aplicação, não só gravado na criação da missão.
+ * Duas consultas simples em vez de um JOIN com agregação em JSON: mantém a
+ * lógica de junção no lado do app e evita depender de função de JSON do
+ * Postgres que precisaria ser replicada no pg-mem dos testes.
+ */
+export async function listMissionTasksWithVideo(
+  missionId: string
+): Promise<MissionTaskWithVideo[]> {
+  const tasks = await query<MissionTask>(
+    `SELECT id, mission_id, description, sort_order
+     FROM mission_tasks WHERE mission_id = $1 ORDER BY sort_order ASC`,
+    [missionId]
+  );
+  if (tasks.length === 0) return [];
+
+  const videos = await query<MissionTaskVideo>(
+    `SELECT v.id, v.mission_task_id, v.title, v.description, v.video_url, v.thumbnail_url,
+            v.duration_seconds, v.provider, v.video_type, v.active
+     FROM mission_task_videos v
+     JOIN mission_tasks t ON t.id = v.mission_task_id
+     WHERE t.mission_id = $1`,
+    [missionId]
+  );
+  const videoByTask = new Map(videos.map((v) => [v.mission_task_id, v]));
+
+  return tasks.map((task) => ({ ...task, video: videoByTask.get(task.id) ?? null }));
+}
+
+export interface UpsertMissionTaskVideoInput {
+  title: string;
+  description?: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  durationSeconds?: number;
+  provider?: VideoProvider;
+  videoType?: VideoType;
+  active?: boolean;
+}
+
+/**
+ * Cria ou substitui o vídeo de uma etapa — só existe um vídeo por etapa por
+ * vez nesta fase (item 8 do aditivo fala em "trocar vídeo", não em
+ * acumular vários), garantido pelo UNIQUE em `mission_task_id`.
+ */
+export async function upsertMissionTaskVideo(
+  missionTaskId: string,
+  input: UpsertMissionTaskVideoInput
+): Promise<MissionTaskVideo> {
+  const video = await queryOne<MissionTaskVideo>(
+    `INSERT INTO mission_task_videos
+       (mission_task_id, title, description, video_url, thumbnail_url, duration_seconds, provider, video_type, active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (mission_task_id) DO UPDATE SET
+       title = EXCLUDED.title,
+       description = EXCLUDED.description,
+       video_url = EXCLUDED.video_url,
+       thumbnail_url = EXCLUDED.thumbnail_url,
+       duration_seconds = EXCLUDED.duration_seconds,
+       provider = EXCLUDED.provider,
+       video_type = EXCLUDED.video_type,
+       active = EXCLUDED.active
+     RETURNING ${VIDEO_COLUMNS}`,
+    [
+      missionTaskId,
+      input.title,
+      input.description ?? null,
+      input.videoUrl,
+      input.thumbnailUrl ?? null,
+      input.durationSeconds ?? null,
+      input.provider ?? "YOUTUBE",
+      input.videoType ?? "DEMONSTRATIVO",
+      input.active ?? true,
+    ]
+  );
+  if (!video) throw new Error("Não foi possível salvar o vídeo.");
+  return video;
+}
+
+export async function deleteMissionTaskVideo(missionTaskId: string): Promise<void> {
+  await query(`DELETE FROM mission_task_videos WHERE mission_task_id = $1`, [missionTaskId]);
 }
 
 /**

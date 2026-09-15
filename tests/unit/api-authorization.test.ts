@@ -26,6 +26,14 @@ vi.mock("@/modules/missions/queries", () => ({
   listMissionsByModule: vi.fn().mockResolvedValue([]),
   createMission: vi.fn().mockResolvedValue({ id: "mission-1" }),
   completeMissionAttempt: vi.fn().mockResolvedValue(undefined),
+  getMissionTaskById: vi.fn().mockResolvedValue({
+    id: "task-1",
+    mission_id: "mission-1",
+    description: "Etapa 1",
+    sort_order: 1,
+  }),
+  upsertMissionTaskVideo: vi.fn().mockResolvedValue({ id: "video-1" }),
+  deleteMissionTaskVideo: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/modules/reports/queries", () => ({
@@ -162,6 +170,64 @@ describe("POST /api/missions/complete — apenas aluno", () => {
     const { POST } = await import("@/app/api/missions/complete/route");
     const res = await POST(jsonRequest("http://localhost/api/missions/complete", validBody));
     expect(res.status).toBe(200);
+  });
+});
+
+describe("PUT /api/missions/[id]/tasks/[taskId]/video — apenas equipe (Fase 10.1)", () => {
+  const validBody = {
+    title: "Como organizar os dados",
+    videoUrl: "https://youtube.com/watch?v=abc123",
+  };
+  const routeParams = { params: Promise.resolve({ id: "mission-1", taskId: "task-1" }) };
+
+  it("rejeita aluno com 403", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "student" }));
+    const { PUT } = await import("@/app/api/missions/[id]/tasks/[taskId]/video/route");
+    const res = await PUT(
+      jsonRequest("http://localhost/api/missions/mission-1/tasks/task-1/video", validBody),
+      routeParams
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("permite professor associar um vídeo (200)", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "teacher" }));
+    const { PUT } = await import("@/app/api/missions/[id]/tasks/[taskId]/video/route");
+    const res = await PUT(
+      jsonRequest("http://localhost/api/missions/mission-1/tasks/task-1/video", validBody),
+      routeParams
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("rejeita quando a etapa não pertence à missão da URL (404)", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "admin" }));
+    const { PUT } = await import("@/app/api/missions/[id]/tasks/[taskId]/video/route");
+    const res = await PUT(
+      jsonRequest("http://localhost/api/missions/outra-missao/tasks/task-1/video", validBody),
+      { params: Promise.resolve({ id: "outra-missao", taskId: "task-1" }) }
+    );
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("DELETE /api/missions/[id]/tasks/[taskId]/video — apenas equipe (Fase 10.1)", () => {
+  it("permite coordenador remover um vídeo (200)", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "coordinator" }));
+    const { DELETE } = await import("@/app/api/missions/[id]/tasks/[taskId]/video/route");
+    const res = await DELETE(new Request("http://localhost/api/missions/mission-1/tasks/task-1/video"), {
+      params: Promise.resolve({ id: "mission-1", taskId: "task-1" }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("rejeita aluno com 403", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "student" }));
+    const { DELETE } = await import("@/app/api/missions/[id]/tasks/[taskId]/video/route");
+    const res = await DELETE(new Request("http://localhost/api/missions/mission-1/tasks/task-1/video"), {
+      params: Promise.resolve({ id: "mission-1", taskId: "task-1" }),
+    });
+    expect(res.status).toBe(403);
   });
 });
 
