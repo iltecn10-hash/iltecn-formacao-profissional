@@ -280,6 +280,26 @@ export interface MissionTaskWithVideo extends MissionTask {
   video: MissionTaskVideo | null;
 }
 
+/**
+ * Vídeo explicativo da missão como um todo (Fase 10.5) — diferente de
+ * `MissionTaskVideo`, que é por etapa. Mesma forma (mesmo `provider`/
+ * `video_type`), só a chave estrangeira muda (`mission_id` em vez de
+ * `mission_task_id`), guardado em uma tabela própria (`mission_videos`)
+ * porque é uma relação 1:1 com a missão, não com uma etapa dela.
+ */
+export interface MissionVideo {
+  id: string;
+  mission_id: string;
+  title: string;
+  description: string | null;
+  video_url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  provider: VideoProvider;
+  video_type: VideoType;
+  active: boolean;
+}
+
 export type MissionAttemptStatus =
   | "bloqueada"
   | "disponivel"
@@ -304,6 +324,8 @@ export interface MissionWithProgress extends Mission {
   submission_url: string | null;
   /** Etapas da missão com vídeo, quando houver (Fase 10.2). */
   tasks: MissionTaskWithVideo[];
+  /** Vídeo explicativo da missão como um todo, quando houver (Fase 10.5). */
+  video: MissionVideo | null;
 }
 
 export interface ModuleWithMissions extends CourseModule {

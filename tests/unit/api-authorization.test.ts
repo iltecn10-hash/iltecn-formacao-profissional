@@ -34,6 +34,9 @@ vi.mock("@/modules/missions/queries", () => ({
   }),
   upsertMissionTaskVideo: vi.fn().mockResolvedValue({ id: "video-1" }),
   deleteMissionTaskVideo: vi.fn().mockResolvedValue(undefined),
+  getMissionById: vi.fn().mockResolvedValue({ id: "mission-1", title: "Missão 1" }),
+  upsertMissionVideo: vi.fn().mockResolvedValue({ id: "mission-video-1" }),
+  deleteMissionVideo: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/modules/reports/queries", () => ({
@@ -226,6 +229,48 @@ describe("DELETE /api/missions/[id]/tasks/[taskId]/video — apenas equipe (Fase
     const { DELETE } = await import("@/app/api/missions/[id]/tasks/[taskId]/video/route");
     const res = await DELETE(new Request("http://localhost/api/missions/mission-1/tasks/task-1/video"), {
       params: Promise.resolve({ id: "mission-1", taskId: "task-1" }),
+    });
+    expect(res.status).toBe(403);
+  });
+});
+
+describe("PUT /api/missions/[id]/video — apenas equipe (Fase 10.5)", () => {
+  const validBody = {
+    title: "Como preencher o requerimento de férias",
+    videoUrl: "https://iltecn-formacao-profissional.vercel.app/videos/requerimento-ferias/explicativo.mp4",
+  };
+  const routeParams = { params: Promise.resolve({ id: "mission-1" }) };
+
+  it("rejeita aluno com 403", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "student" }));
+    const { PUT } = await import("@/app/api/missions/[id]/video/route");
+    const res = await PUT(jsonRequest("http://localhost/api/missions/mission-1/video", validBody), routeParams);
+    expect(res.status).toBe(403);
+  });
+
+  it("permite professor associar o vídeo da missão (200)", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "teacher" }));
+    const { PUT } = await import("@/app/api/missions/[id]/video/route");
+    const res = await PUT(jsonRequest("http://localhost/api/missions/mission-1/video", validBody), routeParams);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe("DELETE /api/missions/[id]/video — apenas equipe (Fase 10.5)", () => {
+  it("permite admin remover o vídeo da missão (200)", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "admin" }));
+    const { DELETE } = await import("@/app/api/missions/[id]/video/route");
+    const res = await DELETE(new Request("http://localhost/api/missions/mission-1/video"), {
+      params: Promise.resolve({ id: "mission-1" }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("rejeita aluno com 403", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "student" }));
+    const { DELETE } = await import("@/app/api/missions/[id]/video/route");
+    const res = await DELETE(new Request("http://localhost/api/missions/mission-1/video"), {
+      params: Promise.resolve({ id: "mission-1" }),
     });
     expect(res.status).toBe(403);
   });

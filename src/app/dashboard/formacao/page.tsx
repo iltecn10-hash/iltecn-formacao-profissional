@@ -5,11 +5,16 @@ import {
   listAllModules,
   listCompetencies,
 } from "@/modules/tracks/queries";
-import { listMissionsByModule, listMissionTasksWithVideo } from "@/modules/missions/queries";
+import {
+  listMissionsByModule,
+  listMissionTasksWithVideo,
+  getMissionVideo,
+} from "@/modules/missions/queries";
 import { TrackForm } from "@/components/track-form";
 import { ModuleForm } from "@/components/module-form";
 import { MissionForm } from "@/components/mission-form";
 import { MissionVideosPanel } from "@/components/mission-task-video-form";
+import { MissionVideoPanel } from "@/components/mission-video-form";
 
 export default async function FormacaoPage() {
   const session = await getSession();
@@ -32,6 +37,7 @@ export default async function FormacaoPage() {
           missions.map(async (mission) => ({
             ...mission,
             tasks: await listMissionTasksWithVideo(mission.id),
+            video: await getMissionVideo(mission.id),
           }))
         ),
       };
@@ -99,6 +105,7 @@ export default async function FormacaoPage() {
                       <span className="text-foreground">{mission.title}</span>
                       <span className="text-muted">{mission.points_value} pts</span>
                     </div>
+                    <MissionVideoPanel missionId={mission.id} video={mission.video} />
                     <MissionVideosPanel missionId={mission.id} tasks={mission.tasks} />
                   </li>
                 ))}

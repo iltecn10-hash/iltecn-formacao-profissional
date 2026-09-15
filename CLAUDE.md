@@ -632,6 +632,66 @@ engineering.
   entre os 7 vídeos e garantir margem contra qualquer novo clipping (pico final ficou
   em torno de -1,5 dBTP em todos, sem distorção). Os 7 vídeos foram regerados do zero
   (mesmos roteiros/slides, só a narração mudou) e o `+faststart` foi mantido.
+- Também nessa correção: `MissionStepRow` passou a tocar vídeo `INTERNAL`/
+  `CLOUD_STORAGE` com o player `<video>` nativo do navegador, embutido na própria
+  etapa (igual ao `<iframe>` do YouTube), em vez de um link que abria o arquivo numa
+  aba nova — pedido do usuário para o vídeo ficar "dentro do curso".
+
+### 10.5 — Vídeo explicativo em cada missão restante (concluída em 2026-09-15)
+
+Depois da 10.4 (7 vídeos por etapa, só na missão "Relatório de Vendas do Mês"), o
+usuário pediu vídeo explicativo em **cada uma das outras missões da plataforma**,
+não por etapa — 1 vídeo cobrindo a missão inteira (contexto, objetivo, etapas,
+dica), do mesmo jeito que "Contas a Pagar da Semana" ou "Requerimento de Férias".
+Duas decisões confirmadas com o usuário antes de implementar:
+
+- **Nível do vídeo**: 1 vídeo por **missão** (não por trilha/módulo) — confirmado
+  porque "Informática Básica" é uma trilha com 2 missões dentro, e o usuário queria
+  o mesmo padrão já usado em "Relatório de Vendas do Mês", só que sem quebrar em
+  etapas.
+- **Formato de produção**: mesmo pipeline gratuito da 10.4 (slides Pillow + narração
+  `espeak-ng`/mbrola offline, já com a correção de clipping acima) — a conta ILDEN
+  tinha 45,7 créditos no momento, insuficiente até para 1 vídeo pago de 30s (~195
+  créditos), então gerar com IA paga para as 12 missões não era viável sem comprar
+  mais créditos.
+
+**Schema novo**: tabela `mission_videos` (`mission_id UUID UNIQUE REFERENCES
+missions(id)`), com as mesmas colunas de `mission_task_videos` — só a chave
+estrangeira muda, porque aqui a relação é 1:1 com a missão inteira, não com uma
+etapa. Migração aplicada via `prepare_database_migration` +
+`complete_database_migration` (confirmada com o usuário antes de aplicar, regra do
+servidor Neon MCP). Também adicionada ao `tests/setup/testDb.ts` (pg-mem).
+
+**Refatoração para reaproveitar código** (evitar triplicar a lógica de embed/
+formulário entre etapa e missão):
+- `VideoUpsertForm` (`src/components/video-upsert-form.tsx`): formulário de vídeo
+  genérico, extraído do antigo `MissionTaskVideoForm` — usado tanto pelo vídeo de
+  etapa (`endpoint: /api/missions/{id}/tasks/{taskId}/video`) quanto pelo vídeo da
+  missão (`endpoint: /api/missions/{id}/video`).
+- `EmbeddedVideoPlayer` (`src/components/embedded-video-player.tsx`): player
+  embutido genérico, extraído do antigo `MissionStepRow` — usado tanto na etapa
+  quanto no card da missão (`MissionCard`), sempre com a mesma lógica de
+  YouTube/iframe vs. INTERNAL·CLOUD_STORAGE/`<video>` vs. VIMEO/link simples.
+- `MissionVideoPanel` (`src/components/mission-video-form.tsx`): painel do
+  professor/admin para gerenciar o vídeo da missão (tela "Formação"), ao lado do
+  `MissionVideosPanel` já existente para os vídeos de etapa.
+
+**Onde aparece para o aluno**: `MissionCard` mostra o vídeo da missão logo após os
+pontos/competências, antes do link "Baixar arquivo modelo" e das etapas — porque
+ele explica a missão inteira, não uma etapa específica.
+
+**Conteúdo**: como nenhuma das 12 missões tem "Manual Guiado" rico (só
+título/contexto/objetivo/etapas, mesma limitação da 10.4), o roteiro de cada vídeo
+foi escrito pelo Claude Code a partir desses campos. "Comparativo de Vendas por
+Vendedor" também cita "criar gráfico" numa etapa — tratado de forma conceitual na
+narração, pela mesma razão da etapa 5 da 10.4 (o simulador não tem ferramenta de
+gráfico).
+
+- Sem migration em `missions`/`mission_tasks`, sem mudança de regra de negócio —
+  só a tabela nova, os 12 arquivos em `public/videos/<slug>/explicativo.mp4` e as 12
+  linhas de `mission_videos`. `npx tsc --noEmit`, `npm run lint`, `npx vitest run`
+  (118/118, 9 novos: 5 de `mission_videos` em `tests/integration/` + 4 de
+  autorização da rota `/api/missions/[id]/video`) e `npm run build` sem erros.
 
 ## Comandos
 

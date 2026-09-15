@@ -5,6 +5,7 @@ import type {
   MissionAttemptStatus,
   MissionTaskVideo,
   MissionTaskWithVideo,
+  MissionVideo,
   TrackWithModules,
   VideoProvider,
   VideoType,
@@ -94,6 +95,15 @@ export async function getMissionTaskById(taskId: string): Promise<MissionTask | 
   return queryOne<MissionTask>(
     `SELECT id, mission_id, description, sort_order FROM mission_tasks WHERE id = $1`,
     [taskId]
+  );
+}
+
+export async function getMissionById(missionId: string): Promise<Mission | null> {
+  return queryOne<Mission>(
+    `SELECT id, module_id, title, context, objective, level, points_value,
+            estimated_minutes, sort_order, active, resource_url, work_config
+     FROM missions WHERE id = $1`,
+    [missionId]
   );
 }
 
@@ -188,6 +198,73 @@ export async function deleteMissionTaskVideo(missionTaskId: string): Promise<voi
   await query(`DELETE FROM mission_task_videos WHERE mission_task_id = $1`, [missionTaskId]);
 }
 
+// ---- Fase 10.5: vídeo explicativo da missão como um todo ----
+
+const MISSION_VIDEO_COLUMNS = `id, mission_id, title, description, video_url, thumbnail_url,
+                                 duration_seconds, provider, video_type, active`;
+
+export async function getMissionVideo(missionId: string): Promise<MissionVideo | null> {
+  return queryOne<MissionVideo>(
+    `SELECT ${MISSION_VIDEO_COLUMNS} FROM mission_videos WHERE mission_id = $1`,
+    [missionId]
+  );
+}
+
+export interface UpsertMissionVideoInput {
+  title: string;
+  description?: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  durationSeconds?: number;
+  provider?: VideoProvider;
+  videoType?: VideoType;
+  active?: boolean;
+}
+
+/**
+ * Cria ou substitui o vídeo explicativo de uma missão — igual à mesma regra
+ * de "um vídeo por vez" do vídeo de etapa (`upsertMissionTaskVideo`), só que
+ * aqui a relação é 1:1 com a missão inteira (`UNIQUE` em `mission_id`), não
+ * com uma etapa dela.
+ */
+export async function upsertMissionVideo(
+  missionId: string,
+  input: UpsertMissionVideoInput
+): Promise<MissionVideo> {
+  const video = await queryOne<MissionVideo>(
+    `INSERT INTO mission_videos
+       (mission_id, title, description, video_url, thumbnail_url, duration_seconds, provider, video_type, active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (mission_id) DO UPDATE SET
+       title = EXCLUDED.title,
+       description = EXCLUDED.description,
+       video_url = EXCLUDED.video_url,
+       thumbnail_url = EXCLUDED.thumbnail_url,
+       duration_seconds = EXCLUDED.duration_seconds,
+       provider = EXCLUDED.provider,
+       video_type = EXCLUDED.video_type,
+       active = EXCLUDED.active
+     RETURNING ${MISSION_VIDEO_COLUMNS}`,
+    [
+      missionId,
+      input.title,
+      input.description ?? null,
+      input.videoUrl,
+      input.thumbnailUrl ?? null,
+      input.durationSeconds ?? null,
+      input.provider ?? "YOUTUBE",
+      input.videoType ?? "DEMONSTRATIVO",
+      input.active ?? true,
+    ]
+  );
+  if (!video) throw new Error("Não foi possível salvar o vídeo da missão.");
+  return video;
+}
+
+export async function deleteMissionVideo(missionId: string): Promise<void> {
+  await query(`DELETE FROM mission_videos WHERE mission_id = $1`, [missionId]);
+}
+
 /**
  * Monta a árvore trilha -> módulo -> missão com o status de tentativa do aluno.
  * Cria tentativas "disponivel" sob demanda para missões que o aluno ainda não viu.
@@ -256,6 +333,7 @@ export async function getStudentProgress(studentId: string): Promise<TrackWithMo
         missions.map(async (mission) => ({
           ...mission,
           tasks: await listMissionTasksWithVideo(mission.id),
+          video: await getMissionVideo(mission.id),
         }))
       );
 

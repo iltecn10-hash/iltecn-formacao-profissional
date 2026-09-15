@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { MissionAttemptStatus, MissionTaskWithVideo, MissionWorkConfig } from "@/types";
+import type { MissionAttemptStatus, MissionTaskWithVideo, MissionVideo, MissionWorkConfig } from "@/types";
 import { MissionStepRow } from "@/components/mission-step-row";
+import { EmbeddedVideoPlayer } from "@/components/embedded-video-player";
 
 const statusLabel: Record<MissionAttemptStatus, string> = {
   bloqueada: "Bloqueada",
@@ -33,6 +34,7 @@ export function MissionCard({
   submissionUrl,
   workConfig,
   tasks,
+  video,
 }: {
   id: string;
   title: string;
@@ -45,6 +47,8 @@ export function MissionCard({
   submissionUrl: string | null;
   workConfig: MissionWorkConfig | null;
   tasks: MissionTaskWithVideo[];
+  /** Vídeo explicativo da missão como um todo, quando houver (Fase 10.5). */
+  video: MissionVideo | null;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -144,6 +148,15 @@ export function MissionCard({
           </span>
         ))}
       </div>
+
+      {/* Vídeo explicativo da missão como um todo (Fase 10.5) — fica logo no início
+          do card, antes do arquivo modelo e das etapas, já que explica a missão
+          inteira, não uma etapa específica. */}
+      {video && video.active && (
+        <div className="mt-3">
+          <EmbeddedVideoPlayer video={video} />
+        </div>
+      )}
 
       {resourceUrl && (
         <a

@@ -97,6 +97,19 @@ export function createTestDb() {
       active BOOLEAN NOT NULL DEFAULT true
     );
 
+    CREATE TABLE mission_videos (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      mission_id UUID NOT NULL UNIQUE REFERENCES missions(id),
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      video_url TEXT NOT NULL,
+      thumbnail_url TEXT,
+      duration_seconds INTEGER,
+      provider VARCHAR(20) NOT NULL DEFAULT 'YOUTUBE',
+      video_type VARCHAR(20) NOT NULL DEFAULT 'DEMONSTRATIVO',
+      active BOOLEAN NOT NULL DEFAULT true
+    );
+
     CREATE TABLE mission_competencies (
       mission_id UUID NOT NULL REFERENCES missions(id),
       competency_id UUID NOT NULL REFERENCES competencies(id),

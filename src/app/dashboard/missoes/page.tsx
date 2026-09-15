@@ -54,6 +54,7 @@ export default async function MissoesPage() {
                         submissionUrl={mission.submission_url}
                         workConfig={mission.work_config}
                         tasks={mission.tasks}
+                        video={mission.video}
                       />
                     ))}
                   </div>
