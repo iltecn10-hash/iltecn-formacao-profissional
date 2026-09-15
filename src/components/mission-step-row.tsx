@@ -33,6 +33,14 @@ export function MissionStepRow({ index, task }: { index: number; task: MissionTa
 
   const video = task.video && task.video.active ? task.video : null;
   const embedUrl = video && video.provider === "YOUTUBE" ? getYoutubeEmbedUrl(video.video_url) : null;
+  // Fase 10.4 (correção pós-entrega): INTERNAL e CLOUD_STORAGE apontam para um
+  // arquivo de vídeo direto (mp4), então dá pra tocar com o player nativo do
+  // navegador embutido na própria etapa, sem abrir aba nova — o aluno pediu
+  // para o vídeo ficar "dentro do curso" em vez de um link solto. VIMEO
+  // continua caindo no link simples abaixo, por não ter (ainda) um
+  // transformador de URL de embed como o do YouTube.
+  const isNativeVideo = video ? video.provider === "INTERNAL" || video.provider === "CLOUD_STORAGE" : false;
+  const hasEmbeddedPlayer = Boolean(embedUrl) || isNativeVideo;
   const duration = video ? formatDuration(video.duration_seconds) : null;
 
   function handleToggle() {
@@ -52,7 +60,7 @@ export function MissionStepRow({ index, task }: { index: number; task: MissionTa
       {video && (
         <div className="mt-2 pl-7">
           <div className="flex flex-wrap items-center gap-2">
-            {embedUrl ? (
+            {hasEmbeddedPlayer ? (
               <button
                 type="button"
                 onClick={handleToggle}
@@ -61,8 +69,8 @@ export function MissionStepRow({ index, task }: { index: number; task: MissionTa
                 {watched ? "↻ Assistir novamente" : "▶ Assistir vídeo"}
               </button>
             ) : (
-              // Provider ainda sem player embutido (item 10 do aditivo): link simples,
-              // sem travar o recurso enquanto o suporte a outros provedores não existe.
+              // Provider ainda sem player embutido (item 10 do aditivo, ex.: VIMEO): link
+              // simples, sem travar o recurso enquanto o suporte a esse provedor não existe.
               <a
                 href={video.video_url}
                 target="_blank"
@@ -89,6 +97,14 @@ export function MissionStepRow({ index, task }: { index: number; task: MissionTa
                 allowFullScreen
                 className="h-full w-full"
               />
+            </div>
+          )}
+
+          {isNativeVideo && open && (
+            <div className="mt-2 w-full max-w-md overflow-hidden rounded-md border border-border">
+              <video controls preload="metadata" className="w-full" src={video.video_url}>
+                Seu navegador não suporta reprodução de vídeo.
+              </video>
             </div>
           )}
         </div>
