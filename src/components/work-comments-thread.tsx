@@ -18,8 +18,18 @@ function formatDateTime(iso: string): string {
  * alteração tanto no editor do aluno quanto na página de staff — a autoria
  * de cada comentário vem do lado do servidor (sessão), então o mesmo
  * componente funciona para os dois papéis.
+ *
+ * `refreshKey` (Fase 9.7): ver o comentário equivalente em
+ * `work-evaluation-panel.tsx` — refaz a busca sem desmontar o componente
+ * (não perde o rascunho do comentário que o usuário esteja digitando).
  */
-export function WorkCommentsThread({ workId }: { workId: string }) {
+export function WorkCommentsThread({
+  workId,
+  refreshKey,
+}: {
+  workId: string;
+  refreshKey?: string | number;
+}) {
   const [comments, setComments] = useState<WorkComment[] | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -38,7 +48,7 @@ export function WorkCommentsThread({ workId }: { workId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [workId]);
+  }, [workId, refreshKey]);
 
   async function handleSend() {
     const body = draft.trim();

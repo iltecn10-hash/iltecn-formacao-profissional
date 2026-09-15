@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 /**
  * Formulário de avaliação manual do professor (Fase 9.6). Só aparece na
@@ -8,14 +9,19 @@ import { useState } from "react";
  * o backend também garante essa regra em `recordManualEvaluation`).
  *
  * Ao enviar, o trabalho muda de status (APPROVED ou RETURNED) no servidor.
- * Usamos `window.location.reload()` em vez de `router.refresh()` de
- * propósito: o `WorkEvaluationPanel` embutido no editor busca as avaliações
- * uma única vez, no mount, e só reage a mudança de `workId` — um
- * `router.refresh()` traz `work` atualizado para o Server Component, mas não
- * remonta esse painel, então a nova avaliação MANUAL não apareceria sem um
- * reload completo da página (verificado ao vivo em produção).
+ * Até a Fase 9.6 usávamos `window.location.reload()` aqui porque o
+ * `WorkEvaluationPanel`/`WorkCommentsThread` embutidos no editor buscavam os
+ * dados uma única vez, no mount, e um `router.refresh()` sozinho não os
+ * fazia refazer a busca. Na Fase 9.7 esses painéis passaram a aceitar uma
+ * prop `refreshKey` (o `status` do trabalho) que refaz a busca sempre que
+ * muda, e o editor em modo `readOnly` (esta tela de staff) passou a derivar
+ * `status` sempre a partir da prop `work.status` mais recente — então um
+ * `router.refresh()` simples já basta: atualiza `work` no Server Component,
+ * o novo `status` desce como prop e os painéis refazem a busca sozinhos,
+ * sem precisar de um reload completo da página.
  */
 export function ManualEvaluationForm({ workId }: { workId: string }) {
+  const router = useRouter();
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [sending, setSending] = useState(false);
@@ -48,7 +54,7 @@ export function ManualEvaluationForm({ workId }: { workId: string }) {
         setError(data?.error ?? "Não foi possível registrar a avaliação.");
         return;
       }
-      window.location.reload();
+      router.refresh();
     } catch {
       setError("Não foi possível registrar a avaliação.");
     } finally {

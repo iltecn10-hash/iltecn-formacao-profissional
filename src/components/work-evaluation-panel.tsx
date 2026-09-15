@@ -57,8 +57,23 @@ export function EvaluationList({ evaluations }: { evaluations: WorkEvaluation[] 
  * calculada na hora da entrega; Fase 9.6 acrescenta as manuais do professor
  * na mesma lista, sem mudar este componente). Só faz sentido depois que o
  * trabalho está travado — antes disso não existe avaliação nenhuma ainda.
+ *
+ * `refreshKey` (Fase 9.7): valor opcional que, ao mudar, refaz a busca sem
+ * desmontar o componente — o chamador passa algo que muda exatamente quando
+ * uma avaliação nova pode ter sido criada (ex.: o status do trabalho). Isto
+ * substitui uma tentativa anterior de usar `key={status}` no componente pai
+ * para forçar remontagem: remontar chegou a causar uma duplicação visual
+ * transitória (o componente antigo e o novo coexistindo por um instante),
+ * enquanto reagir a uma mudança de prop dentro do mesmo componente não tem
+ * esse risco.
  */
-export function WorkEvaluationPanel({ workId }: { workId: string }) {
+export function WorkEvaluationPanel({
+  workId,
+  refreshKey,
+}: {
+  workId: string;
+  refreshKey?: string | number;
+}) {
   const [evaluations, setEvaluations] = useState<WorkEvaluation[] | null>(null);
 
   useEffect(() => {
@@ -74,7 +89,7 @@ export function WorkEvaluationPanel({ workId }: { workId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [workId]);
+  }, [workId, refreshKey]);
 
   if (!evaluations) return null;
 

@@ -43,7 +43,12 @@ export function SpreadsheetWorkEditor({
   const [content, setContent] = useState<SpreadsheetWorkContent>(() =>
     normalizeContent(work.content ?? {}, work.template_key)
   );
-  const [status, setStatus] = useState(work.status);
+  // Ver o comentário equivalente em `document-work-editor.tsx` (Fase 9.7):
+  // em modo `readOnly` o status sempre reflete a prop `work.status` mais
+  // recente do servidor; no editor do próprio aluno, `localStatus` é
+  // otimista.
+  const [localStatus, setLocalStatus] = useState(work.status);
+  const status = readOnly ? work.status : localStatus;
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -91,10 +96,25 @@ export function SpreadsheetWorkEditor({
     };
   }, []);
 
+  // Autosave reage a qualquer mudança de `content` (Fase 9.7) — ver o
+  // comentário equivalente em `document-work-editor.tsx`. Antes,
+  // `updateCell`/`addRow`/`addColumn` calculavam o próximo estado a partir
+  // da variável `content` capturada no fechamento da função — duas chamadas
+  // na mesma leva de atualizações do React (só possível programaticamente)
+  // fariam uma sobrescrever a outra (observação já registrada no relatório
+  // da Fase 9.3).
+  const isFirstContentRender = useRef(true);
+  useEffect(() => {
+    if (isFirstContentRender.current) {
+      isFirstContentRender.current = false;
+      return;
+    }
+    scheduleSave(title, content);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content]);
+
   function updateCell(key: string, value: string) {
-    const next = { ...content, cells: { ...content.cells, [key]: value } };
-    setContent(next);
-    scheduleSave(title, next);
+    setContent((prev) => ({ ...prev, cells: { ...prev.cells, [key]: value } }));
   }
 
   function handleTitleBlur() {
@@ -102,17 +122,11 @@ export function SpreadsheetWorkEditor({
   }
 
   function addRow() {
-    if (content.rows >= MAX_ROWS) return;
-    const next = { ...content, rows: content.rows + 1 };
-    setContent(next);
-    scheduleSave(title, next);
+    setContent((prev) => (prev.rows >= MAX_ROWS ? prev : { ...prev, rows: prev.rows + 1 }));
   }
 
   function addColumn() {
-    if (content.cols >= MAX_COLS) return;
-    const next = { ...content, cols: content.cols + 1 };
-    setContent(next);
-    scheduleSave(title, next);
+    setContent((prev) => (prev.cols >= MAX_COLS ? prev : { ...prev, cols: prev.cols + 1 }));
   }
 
   async function handleSubmitWork() {
@@ -123,7 +137,7 @@ export function SpreadsheetWorkEditor({
     const res = await fetch(`/api/student-works/${work.id}/submit`, { method: "POST" });
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
-      setStatus("SUBMITTED");
+      setLocalStatus("SUBMITTED");
     } else {
       setSubmitError(data.error ?? "Não foi possível entregar esta planilha.");
     }
@@ -180,16 +194,8 @@ export function SpreadsheetWorkEditor({
           necessário e entregue novamente.
         </p>
       )}
-      {/*
-        `key={status}` força o React a desmontar/remontar estes dois painéis
-        sempre que o status muda (ex.: RETURNED → SUBMITTED ao reentregar).
-        Sem isso, o componente já montado não refaz o fetch — ele só busca
-        as avaliações uma vez, no mount — e a nova avaliação automática da
-        reentrega ficaria escondida até um reload manual da página (bug
-        visto ao vivo em produção na verificação da Fase 9.6).
-      */}
-      {hasSubmission && <WorkEvaluationPanel key={status} workId={work.id} />}
-      {hasSubmission && <WorkCommentsThread key={status} workId={work.id} />}
+      {hasSubmission && <WorkEvaluationPanel workId={work.id} refreshKey={status} />}
+      {hasSubmission && <WorkCommentsThread workId={work.id} refreshKey={status} />}
 
       {!isLocked && (
         <p className="mt-3 text-xs text-muted print:hidden">

@@ -45,7 +45,17 @@ export function DocumentWorkEditor({
       ? normalizeContent(work.content)
       : emptyContent()
   );
-  const [status, setStatus] = useState(work.status);
+  // Em modo `readOnly` (tela de staff) não existe ação de entregar por aqui,
+  // então o status sempre reflete a prop `work.status` mais recente vinda do
+  // servidor (útil depois de um `router.refresh()`, por exemplo após uma
+  // avaliação manual). No editor do próprio aluno, `localStatus` é otimista:
+  // atualiza imediatamente após a entrega, sem esperar o servidor (Fase 9.7 —
+  // antes disso o componente usava `key={status}` só para forçar os painéis
+  // de avaliação/comentários a buscar de novo, o que chegou a causar uma
+  // duplicação visual transitória; agora eles reagem à mudança de `status`
+  // via prop `refreshKey`, sem remontar nada).
+  const [localStatus, setLocalStatus] = useState(work.status);
+  const status = readOnly ? work.status : localStatus;
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -92,16 +102,29 @@ export function DocumentWorkEditor({
     };
   }, []);
 
+  // Autosave reage a qualquer mudança de `content`, sempre com o valor mais
+  // recente já commitado pelo React (Fase 9.7). Antes, `updateFieldValue` e
+  // `updateRichValue` calculavam o próximo estado a partir da variável
+  // `content` capturada no fechamento (closure) da função — dois campos
+  // diferentes editados na mesma leva de atualizações do React (só possível
+  // programaticamente) fariam um sobrescrever o outro. Ver a mesma observação,
+  // já corrigida, em `addRow`/`addColumn` de `spreadsheet-work-editor.tsx`.
+  const isFirstContentRender = useRef(true);
+  useEffect(() => {
+    if (isFirstContentRender.current) {
+      isFirstContentRender.current = false;
+      return;
+    }
+    scheduleSave(title, content);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content]);
+
   function updateFieldValue(key: string, value: string) {
-    const next = { ...content, fields: { ...content.fields, [key]: value } };
-    setContent(next);
-    scheduleSave(title, next);
+    setContent((prev) => ({ ...prev, fields: { ...prev.fields, [key]: value } }));
   }
 
   function updateRichValue(key: string, json: Record<string, unknown>) {
-    const next = { ...content, rich: { ...content.rich, [key]: json } };
-    setContent(next);
-    scheduleSave(title, next);
+    setContent((prev) => ({ ...prev, rich: { ...prev.rich, [key]: json } }));
   }
 
   function handleTitleBlur() {
@@ -117,7 +140,7 @@ export function DocumentWorkEditor({
     const res = await fetch(`/api/student-works/${work.id}/submit`, { method: "POST" });
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
-      setStatus("SUBMITTED");
+      setLocalStatus("SUBMITTED");
     } else {
       setSubmitError(data.error ?? "Não foi possível entregar este documento.");
     }
@@ -176,16 +199,8 @@ export function DocumentWorkEditor({
           for necessário e entregue novamente.
         </p>
       )}
-      {/*
-        `key={status}` força o React a desmontar/remontar estes dois painéis
-        sempre que o status muda (ex.: RETURNED → SUBMITTED ao reentregar).
-        Sem isso, o componente já montado não refaz o fetch — ele só busca
-        as avaliações uma vez, no mount — e a nova avaliação automática da
-        reentrega ficaria escondida até um reload manual da página (bug
-        visto ao vivo em produção na verificação da Fase 9.6).
-      */}
-      {hasSubmission && <WorkEvaluationPanel key={status} workId={work.id} />}
-      {hasSubmission && <WorkCommentsThread key={status} workId={work.id} />}
+      {hasSubmission && <WorkEvaluationPanel workId={work.id} refreshKey={status} />}
+      {hasSubmission && <WorkCommentsThread workId={work.id} refreshKey={status} />}
 
       <div id="document-print-area" className="mt-6 flex flex-col gap-5">
         {fieldDefs.map((field) => {

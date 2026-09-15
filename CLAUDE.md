@@ -399,12 +399,54 @@ necessário para as atividades profissionais previstas).
   de remontar o componente (ex.: um contador de versão em estado do componente pai,
   incrementado explicitamente após o submit, passado como prop em vez de `key`).
 
+### 9.7 — Testes e refinamento (concluída em 2026-09-15)
+
+Última subfase da Fase 9 — não adicionou funcionalidade nova, só corrigiu as duas
+observações não bloqueantes deixadas pendentes nas subfases anteriores. Nenhuma
+migration, rota ou schema mudou.
+
+- **Causa raiz da duplicação visual transitória (9.6) corrigida.** O problema era a
+  estratégia de refetch em si (`key={status}` forçando desmonte/remonte de
+  `WorkEvaluationPanel`/`WorkCommentsThread`), não um bug de dados — o remonte podia
+  coincidir com o `router.refresh()` do próprio `handleSubmitWork` e deixar o componente
+  antigo e o novo coexistindo por um instante. Trocado por uma prop `refreshKey?: string |
+  number`, incluída no array de dependências do `useEffect` de busca já existente
+  (`[workId, refreshKey]`) nos dois componentes — o mesmo componente refaz o fetch quando
+  o valor muda, sem nunca desmontar. Os dois editores (`document-work-editor.tsx`,
+  `spreadsheet-work-editor.tsx`) agora passam `refreshKey={status}` no lugar de
+  `key={status}`.
+- **Efeito colateral (bônus) dessa mudança:** para isso funcionar em modo `readOnly`
+  (tela de staff) sem remontar nada, o `status` interno do editor precisava refletir
+  sempre a prop `work.status` mais recente vinda do servidor — antes era um único
+  `useState(work.status)` congelado no valor inicial. Agora cada editor tem
+  `localStatus` (estado otimista, só usado no editor do próprio aluno, atualizado
+  imediatamente após `handleSubmitWork`) e deriva `status = readOnly ? work.status :
+  localStatus`. Com isso, o `window.location.reload()` do `ManualEvaluationForm`
+  (workaround do bug 1 da 9.6) deixou de ser necessário: voltou a ser `router.refresh()`
+  simples — atualiza `work` no Server Component, o novo `status` desce como prop, e os
+  painéis refazem a busca sozinhos via `refreshKey`.
+- **Closure obsoleto em `addRow`/`addColumn` corrigido** (observação já registrada no
+  relatório da 9.3): as duas funções, junto com `updateCell` no editor de planilha e
+  `updateFieldValue`/`updateRichValue` no editor de documento, agora usam a forma
+  funcional do `setState` (`setContent(prev => ({ ...prev, ... }))`) em vez de calcular
+  o próximo valor a partir da variável `content` capturada no fechamento da função. O
+  disparo do autosave também saiu de dentro de cada função mutadora e virou um único
+  `useEffect` que observa `content` e chama `scheduleSave(title, content)` sempre que
+  muda (pulando a primeira renderização com um ref `isFirstContentRender`), garantindo
+  que o autosave sempre usa o estado realmente commitado mais recente.
+- Nenhum teste novo foi necessário — é um refinamento interno de como o estado já
+  testado se propaga, não uma regra de negócio nova; a suíte de 87 testes (14 arquivos)
+  continua cobrindo o comportamento observável e passou sem alteração. Verificação:
+  `npx tsc --noEmit`, `npm run lint`, `npx vitest run` (87/87) e `npm run build`, todos
+  sem erros; e verificação ao vivo em produção confirmando que a duplicação não ocorre
+  mais e que os fluxos de avaliação/comentários (professor e aluno) continuam
+  atualizando a tela sem reload manual.
+
 ### Próximas subfases
 
-9.7 Testes e refinamento (última subfase da Fase 9) — inclui revisitar: (1) a observação
-não bloqueante de closure obsoleto em `addRow`/`addColumn` do
-`spreadsheet-work-editor.tsx` já registrada no relatório da 9.3; (2) a duplicação visual
-transitória pós-reentrega registrada acima, na 9.6.
+Fase 9 (Laboratório Prático de Documentos e Planilhas) concluída com a 9.7 — todas as
+sete subfases (9.1 a 9.7) entregues, testadas e verificadas em produção. Próxima fase a
+definir com o usuário.
 
 ## Comandos
 
