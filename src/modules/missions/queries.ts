@@ -249,14 +249,24 @@ export async function getStudentProgress(studentId: string): Promise<TrackWithMo
         [studentId, mod.id]
       );
 
-      const total = missions.length;
-      const done = missions.filter((m) => m.status === "concluida").length;
+      // Etapas + vídeo de cada missão (Fase 10.2) — uma consulta por missão,
+      // no mesmo estilo (não otimizado, mas consistente) já usado no resto
+      // desta função para montar trilha -> módulo -> missão.
+      const missionsWithTasks = await Promise.all(
+        missions.map(async (mission) => ({
+          ...mission,
+          tasks: await listMissionTasksWithVideo(mission.id),
+        }))
+      );
+
+      const total = missionsWithTasks.length;
+      const done = missionsWithTasks.filter((m) => m.status === "concluida").length;
       trackTotal += total;
       trackDone += done;
 
       modulesWithMissions.push({
         ...mod,
-        missions,
+        missions: missionsWithTasks,
         progress_percent: total === 0 ? 0 : Math.round((done / total) * 100),
       });
     }

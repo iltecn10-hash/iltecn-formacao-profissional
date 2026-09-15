@@ -302,6 +302,8 @@ export interface MissionWithProgress extends Mission {
   status: MissionAttemptStatus;
   competencies: string[];
   submission_url: string | null;
+  /** Etapas da missão com vídeo, quando houver (Fase 10.2). */
+  tasks: MissionTaskWithVideo[];
 }
 
 export interface ModuleWithMissions extends CourseModule {

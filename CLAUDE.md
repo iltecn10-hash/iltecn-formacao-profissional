@@ -502,14 +502,45 @@ para gerenciar vídeos fica para a 10.3.
 - Nada da Fase 9 foi alterado; `resource_url` e `work_config` continuam funcionando como
   antes.
 
+### 10.2 — Tela do aluno: etapas + player (concluída em 2026-09-15)
+
+Primeira vez que `mission_tasks` aparece na interface do aluno — reaproveita
+`listMissionTasksWithVideo` da 10.1 sem nenhuma migration nova.
+
+- `getStudentProgress` (`src/modules/missions/queries.ts`) passou a buscar as etapas de
+  cada missão (`listMissionTasksWithVideo`) dentro do mesmo laço que já monta trilha →
+  módulo → missão; `MissionWithProgress` ganhou o campo `tasks`. Mesmo estilo (uma
+  consulta por item, não otimizado mas consistente) já usado no resto da função.
+- Novo componente `mission-step-row.tsx`: uma etapa numerada, com o vídeo (se houver e
+  estiver `active`) mostrando duração, uma etiqueta do tipo (Explicativo/Demonstrativo/
+  Exemplo/Orientação — item 3 do aditivo) e o botão "▶ Assistir vídeo" que expande um
+  player embutido em `<iframe>` inline; depois da primeira abertura o botão passa a
+  dizer "↻ Assistir novamente" (item 6). Nunca bloqueia a missão (item 4) — é
+  informativo, sem gate nenhum. `src/lib/youtube.ts` (novo) extrai o ID do vídeo de
+  qualquer formato comum de URL do YouTube (`watch?v=`, `youtu.be/`, `/embed/`,
+  `/shorts/`) e monta a URL de embed; providers que não sejam `YOUTUBE` caem para um
+  link "assistir" simples em nova aba, sem player — arquitetura pronta para os outros
+  provedores do item 10, mas só YouTube tem player nesta subfase (decisão do usuário).
+- `mission-card.tsx` ganhou a seção "Etapas da missão" (só aparece quando a missão tem
+  etapas cadastradas) e `missoes/page.tsx` passou a repassar `mission.tasks`.
+- Sem tracking de progresso do vídeo (%, quantidade de visualizações — itens 6/7) nem
+  manual/dicas/checklist ricos por etapa (itens 5/15): fica para depois da Fase 10.4, se
+  o usuário quiser, em cima desta base.
+- 12 testes novos (109 no total): `tests/unit/youtube.test.ts` cobre as variações de URL
+  do YouTube (com/sem `www`/`m.`, `youtu.be`, `/embed/`, `/shorts/`, parâmetros extras,
+  URL de outro provedor, string inválida). `npx tsc --noEmit`, `npm run lint`,
+  `npx vitest run` (109/109) e `npm run build` sem erros. Sem migration nova.
+- Vídeo de teste inserido diretamente no banco de produção (sem UI ainda — o formulário
+  do professor é a 10.3) na etapa "Organizar os dados" da missão piloto "Relatório de
+  Vendas do Mês", só para a verificação ao vivo desta subfase; será substituído por
+  conteúdo real na 10.4.
+
 ### Próximas subfases (Fase 10)
 
-10.2 Tela do aluno: exibir as etapas da missão pela primeira vez, com player embutido
-(YouTube) quando houver vídeo e botão "Assistir novamente", sem bloquear a conclusão da
-missão (item 4 do aditivo).
 10.3 CRUD do professor/admin para adicionar/editar/remover/ativar/desativar/trocar o
 vídeo de uma etapa.
-10.4 Aplicar na missão piloto "Relatório de Vendas do Mês" (item 14 do aditivo).
+10.4 Aplicar na missão piloto "Relatório de Vendas do Mês" (item 14 do aditivo), com
+vídeos reais no lugar do vídeo de teste da 10.2.
 
 ## Comandos
 

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { MissionAttemptStatus, MissionWorkConfig } from "@/types";
+import type { MissionAttemptStatus, MissionTaskWithVideo, MissionWorkConfig } from "@/types";
+import { MissionStepRow } from "@/components/mission-step-row";
 
 const statusLabel: Record<MissionAttemptStatus, string> = {
   bloqueada: "Bloqueada",
@@ -31,6 +32,7 @@ export function MissionCard({
   resourceUrl,
   submissionUrl,
   workConfig,
+  tasks,
 }: {
   id: string;
   title: string;
@@ -42,6 +44,7 @@ export function MissionCard({
   resourceUrl: string | null;
   submissionUrl: string | null;
   workConfig: MissionWorkConfig | null;
+  tasks: MissionTaskWithVideo[];
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -151,6 +154,17 @@ export function MissionCard({
         >
           Baixar arquivo modelo
         </a>
+      )}
+
+      {tasks.length > 0 && (
+        <div className="mt-4 border-t border-border pt-4">
+          <h4 className="text-sm font-semibold text-foreground">Etapas da missão</h4>
+          <div className="mt-2 flex flex-col gap-2">
+            {tasks.map((task, i) => (
+              <MissionStepRow key={task.id} index={i + 1} task={task} />
+            ))}
+          </div>
+        </div>
       )}
 
       {workConfig && currentStatus !== "bloqueada" && (
