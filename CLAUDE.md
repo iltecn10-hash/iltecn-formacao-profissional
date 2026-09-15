@@ -566,10 +566,52 @@ nenhuma rota nova, nenhuma migration.
   erros.
 - Nada da Fase 9 nem das subfases 10.1/10.2 foi alterado.
 
-### Próximas subfases (Fase 10)
+### 10.4 — Vídeos piloto na missão "Relatório de Vendas do Mês" (concluída em 2026-09-15)
 
-10.4 Aplicar na missão piloto "Relatório de Vendas do Mês" (item 14 do aditivo), com
-vídeos reais no lugar do vídeo de teste da 10.2.
+Primeira aplicação real da arquitetura multi-provedor do item 10 do aditivo: os 7
+vídeos desta subfase usam `provider = 'INTERNAL'` (arquivo servido pelo próprio
+Next.js, em vez de YouTube), sem nenhuma mudança de schema ou de código — só dados,
+provando que a decisão de suportar vários provedores desde a 10.1 não era over
+engineering.
+
+- **Por que "INTERNAL" e não "YOUTUBE"**: o usuário pediu para o Claude Code produzir
+  os 7 vídeos, mas não havia orçamento de créditos de geração de vídeo por IA (a conta
+  tinha 68 créditos; um único vídeo de 30s custaria ~195) nem uma forma de publicar no
+  canal do YouTube da ILTECN a partir do sandbox. Optou-se então por uma versão
+  "piloto"/simples: slides estáticos (Pillow) + narração em voz sintetizada offline
+  (`espeak-ng` com voz `mb-br4`, sem custo e sem dependência de rede) + montagem em
+  vídeo (`ffmpeg`), tudo gerado localmente. Os 7 arquivos `.mp4` (1280×720, ~25-34s,
+  ~400-500 KB cada) ficam versionados em `public/videos/relatorio-vendas-do-mes/` e
+  são servidos como arquivo estático do próprio Next.js — daí `provider: 'INTERNAL'`.
+  Como `MissionStepRow` só usa `<iframe>` para `provider === 'YOUTUBE'`, esses vídeos
+  aparecem como link "▶ Assistir vídeo" que abre o `.mp4` direto no navegador (o
+  player nativo do navegador toca normalmente), sem player embutido — mesmo
+  comportamento já usado por qualquer provedor fora do YouTube desde a 10.2.
+- **Roteiro de cada etapa**: como a missão só tinha título/contexto/objetivo gerais e
+  uma descrição de uma linha por etapa (não existe "Manual Guiado" rico por etapa —
+  isso é trabalho futuro, itens 5/15 do aditivo), o roteiro (objetivo, como fazer,
+  exemplo, dica) de cada um dos 7 vídeos foi escrito pelo Claude Code com base no
+  título da missão e na descrição de cada etapa.
+- **Etapa 5 ("Criar gráfico") tratada à parte**: o editor de planilha do ILTECN não
+  tem nenhum recurso de gráfico (só células com fórmulas como `=SOMA`/`=MEDIA`). Em
+  vez de fingir um botão que não existe, o vídeo desta etapa é `EXPLICATIVO` e
+  conceitual: explica para que serve um gráfico de vendas e como o Excel/Google Sheets
+  fazem isso, deixando claro que o simulador ainda não tem essa ferramenta.
+- Vídeo de teste da 10.2 (na etapa "Organizar os dados") substituído pelo vídeo
+  definitivo desta subfase via `ON CONFLICT (mission_task_id) DO UPDATE` (mesma
+  função `upsertMissionTaskVideo` da 10.1) — sem exigir nenhuma tela nova, o CRUD da
+  10.3 já teria dado conta se fosse feito por lá em vez de SQL direto.
+- Sem migration nova, sem mudança de código de produção (`spreadsheet-work-editor`,
+  `mission-step-row`, rotas, etc.) — só as 7 linhas de `mission_task_videos` e os 7
+  arquivos em `public/videos/`. `npx tsc --noEmit`, `npm run lint`,
+  `npx vitest run` (109/109, sem novos testes: nenhuma lógica de aplicação mudou) e
+  `npm run build` sem erros.
+- **Nota para o futuro**: quando fizer sentido financeiramente, dá para gerar uma
+  versão "mais estruturada" com narração paga (Higgsfield/ILDEN) no lugar da voz
+  sintetizada, ou subir os vídeos no YouTube da ILTECN e trocar `provider` para
+  `YOUTUBE` — nesse caso o player embutido passa a funcionar automaticamente, sem
+  nenhuma mudança de código (a `MissionTaskVideoForm` da 10.3 já tem o campo Provedor
+  pronto para essa troca).
 
 ## Comandos
 
