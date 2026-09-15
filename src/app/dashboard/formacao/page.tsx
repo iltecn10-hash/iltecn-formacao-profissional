@@ -5,10 +5,11 @@ import {
   listAllModules,
   listCompetencies,
 } from "@/modules/tracks/queries";
-import { listMissionsByModule } from "@/modules/missions/queries";
+import { listMissionsByModule, listMissionTasksWithVideo } from "@/modules/missions/queries";
 import { TrackForm } from "@/components/track-form";
 import { ModuleForm } from "@/components/module-form";
 import { MissionForm } from "@/components/mission-form";
+import { MissionVideosPanel } from "@/components/mission-task-video-form";
 
 export default async function FormacaoPage() {
   const session = await getSession();
@@ -23,10 +24,18 @@ export default async function FormacaoPage() {
   ]);
 
   const missionsByModule = await Promise.all(
-    modules.map(async (m) => ({
-      module: m,
-      missions: await listMissionsByModule(m.id),
-    }))
+    modules.map(async (m) => {
+      const missions = await listMissionsByModule(m.id);
+      return {
+        module: m,
+        missions: await Promise.all(
+          missions.map(async (mission) => ({
+            ...mission,
+            tasks: await listMissionTasksWithVideo(mission.id),
+          }))
+        ),
+      };
+    })
   );
 
   const trackNameById = Object.fromEntries(tracks.map((t) => [t.id, t.name]));
@@ -85,12 +94,12 @@ export default async function FormacaoPage() {
                   <li className="text-sm text-muted">Nenhuma missão ainda.</li>
                 )}
                 {missions.map((mission) => (
-                  <li
-                    key={mission.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-foreground">{mission.title}</span>
-                    <span className="text-muted">{mission.points_value} pts</span>
+                  <li key={mission.id} className="text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-foreground">{mission.title}</span>
+                      <span className="text-muted">{mission.points_value} pts</span>
+                    </div>
+                    <MissionVideosPanel missionId={mission.id} tasks={mission.tasks} />
                   </li>
                 ))}
               </ul>

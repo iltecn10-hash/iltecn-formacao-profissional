@@ -535,10 +535,39 @@ Primeira vez que `mission_tasks` aparece na interface do aluno — reaproveita
   Vendas do Mês", só para a verificação ao vivo desta subfase; será substituído por
   conteúdo real na 10.4.
 
+### 10.3 — CRUD do professor/admin (concluída em 2026-09-15)
+
+Reaproveita 100% da infraestrutura da 10.1 (rotas `PUT`/`DELETE
+/api/missions/[id]/tasks/[taskId]/video`, já autorizadas para
+admin/professor/coordenador) e da consulta `listMissionTasksWithVideo` da 10.1/10.2 —
+nenhuma rota nova, nenhuma migration.
+
+- Novo `src/components/mission-task-video-form.tsx` com três componentes: o exportado
+  `MissionVideosPanel({ missionId, tasks })` (painel colapsável "Gerenciar vídeos das
+  etapas" — não aparece se a missão não tem etapas), `MissionTaskVideoRow` (uma linha
+  por etapa com status "Sem vídeo"/"Vídeo ativo"/"Vídeo desativado" e o botão
+  Adicionar/Editar) e `MissionTaskVideoForm` (formulário único que serve para criar,
+  editar e trocar o vídeo — é sempre um `PUT`/upsert, com botão "Remover vídeo" quando
+  já existe um). Segue a mesma convenção de estilo (`inputClass`) dos demais formulários
+  da equipe (`module-form.tsx` etc.).
+- `src/app/dashboard/formacao/page.tsx` passou a buscar `listMissionTasksWithVideo` para
+  cada missão junto com `listMissionsByModule` (mesmo padrão já usado em
+  `getStudentProgress`) e a renderizar `<MissionVideosPanel>` dentro do item de cada
+  missão em "Estrutura atual" — a listagem em si (título + pontos) não mudou.
+- Nota de escopo: a tela "Formação" é `admin`-only (`session.role !== "admin"` no topo
+  da página). As rotas de vídeo já autorizam `teacher`/`coordinator` desde a 10.1, mas
+  hoje só o admin tem uma tela para usá-las — se professor/coordenador precisarem
+  gerenciar vídeos diretamente, é preciso decidir uma página própria para esses papéis
+  (não construída nesta subfase, para não expandir escopo sem pedido explícito).
+- Sem testes novos: é um componente client puro sobre rotas já cobertas em
+  `tests/unit/api-authorization.test.ts` (10.1) — segue a convenção do projeto de não
+  testar unitariamente formulários client, só as rotas por trás deles. `npx tsc
+  --noEmit`, `npm run lint`, `npx vitest run` (109/109, sem novos) e `npm run build` sem
+  erros.
+- Nada da Fase 9 nem das subfases 10.1/10.2 foi alterado.
+
 ### Próximas subfases (Fase 10)
 
-10.3 CRUD do professor/admin para adicionar/editar/remover/ativar/desativar/trocar o
-vídeo de uma etapa.
 10.4 Aplicar na missão piloto "Relatório de Vendas do Mês" (item 14 do aditivo), com
 vídeos reais no lugar do vídeo de teste da 10.2.
 
