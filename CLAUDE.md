@@ -693,6 +693,76 @@ gráfico).
   (118/118, 9 novos: 5 de `mission_videos` em `tests/integration/` + 4 de
   autorização da rota `/api/missions/[id]/video`) e `npm run build` sem erros.
 
+### 10.6 — Substituição dos 19 vídeos por gravações reais de tela (concluída em 2026-09-16)
+
+Depois de entregar as 10.4/10.5 com slides Pillow + narração `espeak-ng` (pipeline
+gratuito, usado por falta de créditos ILDEN), o usuário pediu para trocar os 19
+vídeos (7 por etapa de "Relatório de Vendas do Mês" + 12 por missão) por
+**gravações de tela reais**, mostrando as ações de verdade no sistema (ou, nas 2
+missões sem tela própria no simulador, no Desktop/Explorer real do Windows) em vez
+de slides explicativos com narração sintética.
+
+**Produção**: as 17 gravações com tela do próprio ILTECN foram feitas com
+`mcp__claude-in-chrome__gif_creator` (grava a aba do Chrome onde o simulador roda),
+uma por etapa/missão, e baixadas pelo usuário para a pasta Downloads do Windows.
+
+**As 2 exceções sem tela no simulador** — "Organização da Pasta de Trabalho" e
+"Backup em Pendrive" — não têm equivalente dentro do ILTECN (são sobre organizar
+pastas no Windows e copiar arquivos para um pendrive real), então precisavam
+mostrar o Desktop/Explorer de verdade. Tentativas de gravar vídeo de tela nessas
+duas (Ferramenta de Captura em modo vídeo, Xbox Game Bar via Win+Alt+R e
+Win+Shift+R) **falharam de forma consistente**: a gravação parecia iniciar (a
+barra de controle some da tela), mas a pasta `Vídeos\Capturas` nunca recebia
+nenhum arquivo, em 5 tentativas distintas — 2 com a Ferramenta de Captura, 2 com o
+Game Bar (uma pelo usuário, outra pelo Claude com acesso total), mais 1 mista.
+Conclusão: a captura de vídeo via APIs `Windows.Graphics.Capture`/duplicação de
+tela não funciona neste tipo de acesso remoto (provavelmente por não ter acesso
+direto à placa de vídeo/driver de exibição), enquanto a **captura estática**
+("foto"/`Win+Shift+S`) funciona de forma confiável e salva em
+`Imagens\Capturas de Tela`.
+
+**Solução**: as 2 exceções foram montadas como GIFs a partir de uma sequência de
+capturas de tela estáticas reais (mesmo formato visual — GIF — das outras 17), sem
+abrir nenhum arquivo sensível do Desktop real do usuário (certificados digitais,
+app de token, atalho de cobrança ficaram fora de qualquer captura):
+- "Organização da Pasta de Trabalho": Desktop real → pasta Downloads → pasta
+  Documentos (3 capturas, mostrando a real bagunça/organização de um desktop de
+  trabalho).
+- "Backup em Pendrive": "Este Computador" com os discos/pendrive listados →
+  pendrive aberto e vazio, pronto para copiar (2 capturas). A primeira tentativa
+  de captura de "Este Computador" saiu com o painel lateral do próprio app
+  Cowork sobrepondo e cortando a coluna do pendrive (o painel de conversa fica
+  renderizado por cima da tela real controlada); corrigido reaproveitando uma
+  segunda captura, feita com a view em modo "Detalhes" da mesma tela, sem esse
+  recorte.
+
+**Conversão GIF → MP4** (as 17 gravações reais + as 2 montadas): todas passaram
+pelo mesmo pipeline ffmpeg, sem narração (são gravações de ações reais, não
+slides — não fazia sentido sintetizar áudio por cima):
+```bash
+ffmpeg -y -i entrada.gif \
+  -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,fps=24,format=yuv420p" \
+  -c:v libx264 -preset veryfast -crf 23 \
+  -movflags +faststart \
+  -an \
+  saida.mp4
+```
+Mesma resolução/faststart da 10.4, mas sem faixa de áudio (`-an`) — o
+`EmbeddedVideoPlayer` (`<video controls>`) toca normalmente vídeos sem áudio, sem
+precisar de nenhuma mudança de código.
+
+**Arquivos substituídos**: os 19 `.mp4` em `public/videos/<slug>/...` (mesmos
+caminhos da 10.4/10.5, conteúdo trocado). `duration_seconds` atualizado (UPDATE
+simples, sem migration) nas 7 linhas de `mission_task_videos` e nas 12 linhas de
+`mission_videos` para refletir a duração real de cada gravação — os vídeos com
+ações reais ficaram com durações bem diferentes dos slides (de 4s a 58s, contra a
+faixa fixa de ~25-40s dos slides antigos).
+
+- Sem migration de schema, sem mudança de regra de negócio — só os 19 arquivos de
+  vídeo e as 19 atualizações de `duration_seconds`. `npx tsc --noEmit`, `npm run
+  lint`, `npx vitest run` e `npm run build` sem erros (nenhum teste depende do
+  conteúdo/duração dos vídeos, só de `provider`/`video_type`/URLs).
+
 ## Comandos
 
 ```bash
