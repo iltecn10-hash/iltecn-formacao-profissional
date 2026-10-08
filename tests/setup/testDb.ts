@@ -36,7 +36,37 @@ export function createTestDb() {
       user_id UUID NOT NULL REFERENCES users(id),
       school_id UUID NOT NULL REFERENCES schools(id),
       level INTEGER NOT NULL DEFAULT 1,
-      points INTEGER NOT NULL DEFAULT 0
+      points INTEGER NOT NULL DEFAULT 0,
+      audience VARCHAR(20) NOT NULL DEFAULT 'professional'
+    );
+
+    CREATE TABLE teachers (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES users(id),
+      school_id UUID REFERENCES schools(id)
+    );
+
+    CREATE TABLE coordinators (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES users(id),
+      school_id UUID REFERENCES schools(id)
+    );
+
+    CREATE TABLE classes (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      school_id UUID NOT NULL REFERENCES schools(id),
+      teacher_id UUID REFERENCES teachers(id),
+      name VARCHAR(255) NOT NULL,
+      school_year INTEGER NOT NULL DEFAULT 2026,
+      active BOOLEAN NOT NULL DEFAULT true
+    );
+
+    CREATE TABLE enrollments (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_id UUID NOT NULL REFERENCES students(id),
+      class_id UUID NOT NULL REFERENCES classes(id),
+      status VARCHAR(20) NOT NULL DEFAULT 'active',
+      UNIQUE(student_id, class_id)
     );
 
     CREATE TABLE tracks (
@@ -45,7 +75,8 @@ export function createTestDb() {
       slug VARCHAR(100) NOT NULL,
       description TEXT,
       sort_order INTEGER NOT NULL DEFAULT 0,
-      active BOOLEAN NOT NULL DEFAULT true
+      active BOOLEAN NOT NULL DEFAULT true,
+      audience VARCHAR(20) NOT NULL DEFAULT 'professional'
     );
 
     CREATE TABLE modules (
@@ -149,8 +180,13 @@ export function createTestDb() {
       code VARCHAR(50) UNIQUE NOT NULL,
       name VARCHAR(255) NOT NULL,
       criteria_type VARCHAR(30) NOT NULL,
+      description TEXT,
+      icon VARCHAR(20),
       criteria_value INTEGER,
-      criteria_track_id UUID REFERENCES tracks(id)
+      criteria_track_id UUID REFERENCES tracks(id),
+      criteria_mission_id UUID REFERENCES missions(id),
+      criteria_skill VARCHAR(20),
+      audience VARCHAR(20) NOT NULL DEFAULT 'professional'
     );
 
     CREATE TABLE student_achievements (
@@ -158,6 +194,44 @@ export function createTestDb() {
       achievement_id UUID NOT NULL REFERENCES achievements(id),
       earned_at TIMESTAMP DEFAULT now(),
       PRIMARY KEY (student_id, achievement_id)
+    );
+
+    CREATE TABLE mission_activities (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      code VARCHAR(80) NOT NULL UNIQUE,
+      mission_id UUID NOT NULL REFERENCES missions(id),
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      kind VARCHAR(20) NOT NULL,
+      category VARCHAR(20) NOT NULL DEFAULT 'practice',
+      skill VARCHAR(20) NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      prompt TEXT NOT NULL,
+      config JSONB NOT NULL DEFAULT '{}',
+      xp INTEGER NOT NULL DEFAULT 20,
+      active BOOLEAN NOT NULL DEFAULT true
+    );
+
+    CREATE TABLE student_activity_progress (
+      student_id UUID NOT NULL REFERENCES students(id),
+      activity_id UUID NOT NULL REFERENCES mission_activities(id),
+      attempts INTEGER NOT NULL DEFAULT 0,
+      best_score INTEGER NOT NULL DEFAULT 0,
+      completed BOOLEAN NOT NULL DEFAULT false,
+      completed_at TIMESTAMP,
+      last_attempt_at TIMESTAMP NOT NULL DEFAULT now(),
+      PRIMARY KEY (student_id, activity_id)
+    );
+
+    CREATE TABLE track_certificates (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_id UUID NOT NULL REFERENCES students(id),
+      track_id UUID NOT NULL REFERENCES tracks(id),
+      code VARCHAR(20) NOT NULL UNIQUE,
+      score INTEGER NOT NULL,
+      workload_hours INTEGER NOT NULL DEFAULT 30,
+      snapshot JSONB NOT NULL,
+      issued_at TIMESTAMP NOT NULL DEFAULT now(),
+      UNIQUE(student_id, track_id)
     );
 
     CREATE TABLE categories (

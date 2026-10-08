@@ -20,6 +20,7 @@ const createSchema = z.object({
   birthDate: z.string().optional(),
   guardianName: z.string().optional(),
   guardianContact: z.string().optional(),
+  audience: z.enum(["professional", "kids"]).optional(),
 });
 
 export async function POST(request: NextRequest) {

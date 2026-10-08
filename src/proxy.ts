@@ -3,6 +3,8 @@ import { jwtVerify } from "jose";
 
 const COOKIE_NAME = "iltecn_session";
 const PUBLIC_PATHS = ["/login"];
+// Validação pública de certificado (mostra só o mínimo de dados — ver lab/queries.ts)
+const PUBLIC_PREFIXES = ["/validar/"];
 
 function getSecretKey() {
   const secret = process.env.JWT_SECRET ?? "";
@@ -15,6 +17,7 @@ export async function proxy(request: NextRequest) {
   const isApiRoute = pathname.startsWith("/api");
   const isPublic =
     PUBLIC_PATHS.includes(pathname) ||
+    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
     isApiRoute ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico";

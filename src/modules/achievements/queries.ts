@@ -6,6 +6,7 @@ export async function listAchievementsForStudent(studentId: string): Promise<Ach
     `SELECT a.id, a.code, a.name, a.description, a.icon, sa.earned_at
      FROM achievements a
      LEFT JOIN student_achievements sa ON sa.achievement_id = a.id AND sa.student_id = $1
+     WHERE a.audience = COALESCE((SELECT audience FROM students WHERE id = $1), 'professional')
      ORDER BY (sa.earned_at IS NULL), sa.earned_at DESC, a.name ASC`,
     [studentId]
   );

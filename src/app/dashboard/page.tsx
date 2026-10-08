@@ -2,7 +2,8 @@ import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { StatCard } from "@/components/stat-card";
 import { ProgressBar } from "@/components/progress-bar";
-import { getStudentIdByUserId } from "@/modules/students/queries";
+import { redirect } from "next/navigation";
+import { getStudentIdByUserId, isKidsStudent } from "@/modules/students/queries";
 import { getStudentProgress } from "@/modules/missions/queries";
 
 async function getCounts() {
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
   if (!session) return null;
 
   if (session.role === "student") {
+    if (await isKidsStudent(session.userId)) redirect("/dashboard/lab");
     const studentId = await getStudentIdByUserId(session.userId);
     const tracks = studentId ? await getStudentProgress(studentId) : [];
     const overall =

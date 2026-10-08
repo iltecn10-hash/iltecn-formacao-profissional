@@ -30,10 +30,19 @@ export interface Teacher {
   email?: string;
 }
 
+/**
+ * Público de uma trilha/aluno/conquista (ILTECN LAB). 'professional' é o
+ * comportamento histórico da plataforma; 'kids' é o programa de alfabetização
+ * digital infantil. Opcional nos tipos porque as consultas antigas não o
+ * selecionam — ausente significa 'professional'.
+ */
+export type Audience = "professional" | "kids";
+
 export interface Student {
   id: string;
   user_id: string;
   school_id: string;
+  audience?: Audience;
   birth_date: string | null;
   guardian_name: string | null;
   guardian_contact: string | null;
@@ -78,6 +87,7 @@ export interface Achievement {
   description: string | null;
   icon: string;
   earned_at: string | null;
+  audience?: Audience;
 }
 
 export interface SessionPayload {
@@ -200,6 +210,7 @@ export interface Track {
   description: string | null;
   sort_order: number;
   active: boolean;
+  audience?: Audience;
 }
 
 export interface CourseModule {

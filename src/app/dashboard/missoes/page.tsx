@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getStudentIdByUserId } from "@/modules/students/queries";
+import { getStudentIdByUserId, isKidsStudent } from "@/modules/students/queries";
 import { getStudentProgress } from "@/modules/missions/queries";
 import { MissionCard } from "@/components/mission-card";
 
@@ -9,6 +9,8 @@ export default async function MissoesPage() {
   if (!session || session.role !== "student") {
     redirect("/dashboard");
   }
+
+  if (await isKidsStudent(session.userId)) redirect("/dashboard/lab");
 
   const studentId = await getStudentIdByUserId(session.userId);
   const tracks = studentId ? await getStudentProgress(studentId) : [];

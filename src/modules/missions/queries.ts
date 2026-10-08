@@ -270,6 +270,10 @@ export async function deleteMissionVideo(missionId: string): Promise<void> {
  * Cria tentativas "disponivel" sob demanda para missões que o aluno ainda não viu.
  */
 export async function getStudentProgress(studentId: string): Promise<TrackWithModules[]> {
+  // Cada aluno só enxerga as trilhas do seu público (profissional x infantil).
+  const audience =
+    (await queryOne<{ audience: string }>(`SELECT audience FROM students WHERE id = $1`, [studentId]))
+      ?.audience ?? "professional";
   const tracks = await query<{
     id: string;
     name: string;
@@ -277,7 +281,11 @@ export async function getStudentProgress(studentId: string): Promise<TrackWithMo
     description: string | null;
     sort_order: number;
     active: boolean;
-  }>(`SELECT id, name, slug, description, sort_order, active FROM tracks WHERE active ORDER BY sort_order ASC`);
+  }>(
+    `SELECT id, name, slug, description, sort_order, active FROM tracks
+     WHERE active AND audience = $1 ORDER BY sort_order ASC`,
+    [audience]
+  );
 
   const result: TrackWithModules[] = [];
 
@@ -455,6 +463,7 @@ export async function completeMissionAttempt(
        SELECT $1::uuid, a.id FROM achievements a
        LEFT JOIN student_achievements sa ON sa.student_id = $1::uuid AND sa.achievement_id = a.id
        WHERE a.criteria_type = 'missions_completed'
+         AND a.audience = (SELECT audience FROM students WHERE id = $1::uuid)
          AND sa.achievement_id IS NULL
          AND (SELECT COUNT(*) FROM mission_attempts WHERE student_id = $1::uuid AND status = 'concluida') >= a.criteria_value
        ON CONFLICT DO NOTHING`,
@@ -465,6 +474,7 @@ export async function completeMissionAttempt(
        SELECT $1::uuid, a.id FROM achievements a
        LEFT JOIN student_achievements sa ON sa.student_id = $1::uuid AND sa.achievement_id = a.id
        WHERE a.criteria_type = 'points'
+         AND a.audience = (SELECT audience FROM students WHERE id = $1::uuid)
          AND sa.achievement_id IS NULL
          AND (SELECT points FROM students WHERE id = $1::uuid) >= a.criteria_value
        ON CONFLICT DO NOTHING`,
@@ -485,6 +495,7 @@ export async function completeMissionAttempt(
        ) tp ON tp.track_id = a.criteria_track_id
        LEFT JOIN student_achievements sa ON sa.student_id = $1::uuid AND sa.achievement_id = a.id
        WHERE a.criteria_type = 'track_completed'
+         AND a.audience = (SELECT audience FROM students WHERE id = $1::uuid)
          AND sa.achievement_id IS NULL
          AND tp.total_missions > 0
          AND tp.total_missions = tp.completed_missions

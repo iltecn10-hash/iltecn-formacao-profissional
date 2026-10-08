@@ -45,7 +45,12 @@ vi.mock("@/modules/reports/queries", () => ({
   }),
 }));
 
+vi.mock("@/modules/lab/guard", () => ({
+  isKidsMission: vi.fn().mockResolvedValue(false),
+}));
+
 import { getSession } from "@/lib/auth";
+import { isKidsMission } from "@/modules/lab/guard";
 const mockGetSession = vi.mocked(getSession);
 
 function jsonRequest(url: string, body: unknown) {
@@ -302,5 +307,33 @@ describe("GET /api/reports/student/[id] — privacidade do relatório do aluno",
       params: Promise.resolve({ id: "qualquer-aluno-id" }),
     });
     expect(res.status).toBe(200);
+  });
+});
+
+describe("missões do ILTECN LAB não podem ser concluídas pela rota genérica", () => {
+  it("POST /api/missions/complete recusa aula do LAB (403) e não credita pontos", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "student" }));
+    vi.mocked(isKidsMission).mockResolvedValueOnce(true);
+    const { POST } = await import("@/app/api/missions/complete/route");
+    const res = await POST(
+      jsonRequest("http://localhost/api/missions/complete", { missionId: "11111111-1111-4111-8111-111111111111" })
+    );
+    expect(res.status).toBe(403);
+    const { completeMissionAttempt } = await import("@/modules/missions/queries");
+    expect(vi.mocked(completeMissionAttempt)).not.toHaveBeenCalledWith(
+      expect.anything(),
+      "11111111-1111-4111-8111-111111111111",
+      undefined
+    );
+  });
+
+  it("POST /api/missions/start também recusa", async () => {
+    mockGetSession.mockResolvedValue(session({ role: "student" }));
+    vi.mocked(isKidsMission).mockResolvedValueOnce(true);
+    const { POST } = await import("@/app/api/missions/start/route");
+    const res = await POST(
+      jsonRequest("http://localhost/api/missions/start", { missionId: "11111111-1111-4111-8111-111111111111" })
+    );
+    expect(res.status).toBe(403);
   });
 });

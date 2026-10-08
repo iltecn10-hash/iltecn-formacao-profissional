@@ -14,6 +14,7 @@ export function StudentForm({ schools }: { schools: School[] }) {
   const [password, setPassword] = useState("");
   const [schoolId, setSchoolId] = useState(schools[0]?.id ?? "");
   const [guardianName, setGuardianName] = useState("");
+  const [audience, setAudience] = useState<"professional" | "kids">("professional");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -36,6 +37,7 @@ export function StudentForm({ schools }: { schools: School[] }) {
         password,
         schoolId,
         guardianName,
+        audience,
       }),
     });
     const data = await res.json();
@@ -113,6 +115,20 @@ export function StudentForm({ schools }: { schools: School[] }) {
           placeholder="Mínimo 6 caracteres"
           className={inputClass}
         />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
+          Programa
+        </label>
+        <select
+          value={audience}
+          onChange={(e) => setAudience(e.target.value as "professional" | "kids")}
+          className={inputClass}
+        >
+          <option value="professional">Formação Profissional</option>
+          <option value="kids">ILTECN LAB — Primeiros Passos no Computador (crianças)</option>
+        </select>
       </div>
 
       <div className="sm:col-span-2">

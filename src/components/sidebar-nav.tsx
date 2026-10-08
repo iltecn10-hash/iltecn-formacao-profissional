@@ -10,6 +10,12 @@ interface NavItem {
   roles: UserRole[];
 }
 
+/** Menu enxuto do aluno do ILTECN LAB (crianças): poucas opções, nomes simples. */
+const KIDS_NAV_ITEMS: NavItem[] = [
+  { href: "/dashboard/lab", label: "🏠 Meu painel", roles: ["student"] },
+  { href: "/dashboard/lab/certificado", label: "🎓 Certificado", roles: ["student"] },
+];
+
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/dashboard",
@@ -20,6 +26,11 @@ const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/email",
     label: "E-mail",
     roles: ["admin", "teacher", "student", "coordinator"],
+  },
+  {
+    href: "/dashboard/lab",
+    label: "ILTECN LAB",
+    roles: ["admin", "teacher", "coordinator"],
   },
   {
     href: "/dashboard/missoes",
@@ -88,14 +99,16 @@ const NAV_ITEMS: NavItem[] = [
 export function SidebarNav({
   role,
   name,
+  kids = false,
 }: {
   role: UserRole;
   name: string;
+  kids?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
+  const items = (kids ? KIDS_NAV_ITEMS : NAV_ITEMS).filter((item) => item.roles.includes(role));
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });

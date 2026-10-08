@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { getStudentIdByUserId } from "@/modules/students/queries";
+import { isKidsMission } from "@/modules/lab/guard";
 import { startMissionAttempt } from "@/modules/missions/queries";
 
 const schema = z.object({ missionId: z.string().uuid() });
@@ -26,6 +27,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Perfil de aluno não encontrado." },
       { status: 404 }
+    );
+  }
+
+  if (await isKidsMission(parsed.data.missionId)) {
+    return NextResponse.json(
+      { error: "Esta aula é do ILTECN LAB. Abra-a pelo painel do LAB." },
+      { status: 403 }
     );
   }
 

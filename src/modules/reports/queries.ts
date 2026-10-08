@@ -43,7 +43,10 @@ export async function getStudentReport(studentId: string): Promise<StudentReport
   const missionCounts = await queryOne<{ completed: string; total: string }>(
     `SELECT
        (SELECT COUNT(*) FROM mission_attempts WHERE student_id = $1 AND status = 'concluida') AS completed,
-       (SELECT COUNT(*) FROM missions WHERE active) AS total`,
+       (SELECT COUNT(*) FROM missions mi
+          JOIN modules mo ON mo.id = mi.module_id
+          JOIN tracks tr ON tr.id = mo.track_id
+          WHERE mi.active AND tr.audience = (SELECT audience FROM students WHERE id = $1)) AS total`,
     [studentId]
   );
 

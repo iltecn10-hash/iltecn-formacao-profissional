@@ -28,6 +28,8 @@ export interface CreateStudentInput {
   birthDate?: string;
   guardianName?: string;
   guardianContact?: string;
+  /** 'kids' = aluno do ILTECN LAB. Omitido/'professional' = comportamento de sempre. */
+  audience?: "professional" | "kids";
 }
 
 export async function createStudent(input: CreateStudentInput): Promise<Student> {
@@ -41,9 +43,12 @@ export async function createStudent(input: CreateStudentInput): Promise<Student>
   );
   if (!user) throw new Error("Falha ao criar usuário do aluno.");
 
+  // A coluna `audience` só entra no INSERT para o público infantil: o cadastro
+  // profissional continua exatamente como era (e funciona mesmo antes da migration).
+  const kids = input.audience === "kids";
   const student = await queryOne<Student>(
-    `INSERT INTO students (user_id, school_id, birth_date, guardian_name, guardian_contact)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO students (user_id, school_id, birth_date, guardian_name, guardian_contact${kids ? ", audience" : ""})
+     VALUES ($1, $2, $3, $4, $5${kids ? ", 'kids'" : ""})
      RETURNING id, user_id, school_id, birth_date, guardian_name, guardian_contact, level, points`,
     [
       user.id,
@@ -56,4 +61,17 @@ export async function createStudent(input: CreateStudentInput): Promise<Student>
   if (!student) throw new Error("Falha ao criar aluno.");
 
   return { ...student, name: input.name, email: input.email };
+}
+
+/**
+ * O aluno é do ILTECN LAB (público infantil)? Qualquer falha (ex.: coluna ainda
+ * inexistente antes da migration) cai em "profissional" — o comportamento antigo.
+ */
+export async function isKidsStudent(userId: string): Promise<boolean> {
+  try {
+    const row = await queryOne<{ audience: string }>(`SELECT audience FROM students WHERE user_id = $1`, [userId]);
+    return row?.audience === "kids";
+  } catch {
+    return false;
+  }
 }

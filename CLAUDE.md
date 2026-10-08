@@ -49,7 +49,7 @@ tests/
 scripts/seed.ts       — cria admin + escola modelo
 ```
 
-## Modelo de dados (produção — 33 tabelas)
+## Modelo de dados (produção — 33 tabelas; +3 do ILTECN LAB após a migration da Fase 11)
 
 Fundação: `users`, `schools`, `teachers`, `coordinators`, `students`, `classes`, `enrollments`
 Formação/Missões: `tracks`, `modules`, `competencies`, `missions`, `mission_tasks`, `mission_competencies`, `mission_attempts`, `student_competencies`, `scores`
@@ -763,6 +763,85 @@ faixa fixa de ~25-40s dos slides antigos).
   lint`, `npx vitest run` e `npm run build` sem erros (nenhum teste depende do
   conteúdo/duração dos vídeos, só de `provider`/`video_type`/URLs).
 
+## Fase 11 — ILTECN LAB: Primeiros Passos no Computador (implementada em 2026-10-08, aguardando migration em produção)
+
+Segundo programa DENTRO da mesma plataforma (não é um segundo sistema): alfabetização digital
+para crianças/iniciantes, 6 módulos, 30 aulas, 30h, com atividades interativas, XP, medalhas,
+avaliação e certificado. Regra seguida: REUTILIZAR > ADAPTAR > CRIAR NOVO.
+
+### Reaproveitado (nada duplicado)
+Trilha→módulo→missão (`tracks`/`modules`/`missions`: cada aula é uma missão, `sort_order` = nº da
+aula 1–30), etapas (`mission_tasks`), vídeos (`mission_videos`/`mission_task_videos` +
+`EmbeddedVideoPlayer`), `completeMissionAttempt()` (pontos, `scores`, conquistas clássicas),
+`students.points`, editor de documentos da Fase 9 (aulas 22, 23 e 26 via `work_config`),
+`student_works`, `achievements`/`student_achievements`, auth/sessão, `proxy.ts`.
+
+### Migration (aditiva, idempotente) — `migrations/2026-10-08_iltecn_lab.sql`
+- `audience` ('professional'|'kids', default 'professional') em `tracks`, `students`, `achievements`.
+  Sem isso as 30 aulas apareceriam para os alunos profissionais atuais (e vice-versa).
+- `achievements.criteria_mission_id`, `criteria_skill` + CHECK ampliado (`track_started`,
+  `mission_completed`, `skill_completed`, `challenges_completed`).
+- Tabelas novas: `mission_activities` (atividade interativa; `code` único, `config` JSONB com o
+  gabarito), `student_activity_progress` (tentativas, melhor nota, concluída), `track_certificates`
+  (código único + `snapshot`).
+- Testada numa branch temporária do Neon (migration aplicada + amostra do seed rodada duas vezes: sem
+  duplicar; dados existentes intactos). **Ordem de deploy: migration → seed → deploy do código**
+  (o código novo consulta `audience`).
+- Rollback manual: comentado no fim do arquivo SQL (só antes de existirem dados do programa).
+
+### Código
+- `src/lib/lab/activities.ts` — tipos de atividade (choice, match, order, drag, type, files, gesture,
+  draw, desktop), validação do config (`validateActivityConfig`), versão pública SEM gabarito
+  (`toPublicConfig`), correção no servidor (`gradeActivity`), `scoreFromAttempts` (100/80/60/mín. 40).
+- `src/lib/lab/evaluation.ts` — avaliação derivada (30% conhecimento · 50% prática · 20% projeto;
+  faixas 90/80/70/60) e status de habilidade (🟢🟡🔴 sempre com texto).
+- `src/lib/lab/content/*` — conteúdo das 30 aulas (95 atividades) + 15 medalhas. `src/lib/levels.ts`:
+  `kidsLevel()` (Explorador→Mestre Digital; só exibição, `students.level` continua o profissional).
+- `src/modules/lab/queries.ts` — painel do aluno, aula (gabarito nunca sai do servidor), `submitActivity`
+  (XP pago uma única vez via `UPDATE … WHERE completed = false`), `completeLabLesson` (exige
+  atividades feitas e, nas aulas de documento, trabalho entregue; chama `completeMissionAttempt`),
+  medalhas, avaliação, certificado (`ILT-XXXX-XXXX`), validação pública (nome reduzido: "Maria S.").
+- `src/modules/lab/monitor.ts` — acompanhamento do professor/escola; **isolamento no SQL**: admin
+  tudo, coordenador só a escola, professor só as suas turmas, demais perfis nada.
+- `src/modules/lab/content.ts` — CRUD de atividades (admin); "remover" só desativa (preserva histórico).
+- `src/modules/lab/seed.ts` + `scripts/seed-lab.ts` (`npm run seed:lab [-- --overwrite]`): cria só o
+  que falta, nunca sobrescreve edição do admin sem `--overwrite`.
+- `src/modules/lab/guard.ts`: `/api/missions/complete` e `/start` recusam aulas do LAB (senão daria
+  para ganhar pontos sem fazer as atividades).
+- Filtros por público nos fluxos antigos: `getStudentProgress`, `getStudentReport`,
+  `listAchievementsForStudent` e as 3 concessões de conquista de `completeMissionAttempt`.
+
+### Rotas
+`GET /api/lab/lessons/[id]`, `POST /api/lab/lessons/[id]/complete`,
+`POST /api/lab/activities/[id]/submit` (aluno) · `GET /api/lab/monitor?classId=` (equipe, escopo no SQL) ·
+`GET|POST /api/lab/missions/[id]/activities`, `PATCH|DELETE /api/lab/activities/[id]` (admin) ·
+página pública `/validar/[code]` (adicionada aos caminhos públicos do `proxy.ts`).
+
+### Telas
+`/dashboard/lab` (aluno: painel com aulas x/30, XP, nível, medalhas, habilidades, avaliação; equipe:
+acompanhamento com polling de 20s), `/dashboard/lab/aula/[id]` (Aprender → Ver → Praticar → Desafiar →
+Conquistar, guia **LIA** com mensagens prontas), `/dashboard/lab/certificado`,
+`/dashboard/lab/conteudo` (admin). Aluno `kids` vê menu enxuto e é redirecionado de `/dashboard` e
+`/dashboard/missoes` para o LAB. Cadastro de aluno ganhou o campo "Programa".
+
+### Decisões / limitações (honestas)
+- Correção no servidor para escolha, ligar, ordenar, arrastar, digitar e arquivos. **Gestos do mouse,
+  desenho e janelas são relatados pelo navegador** (o servidor não consegue provar um movimento); o
+  custo de "trapacear" é só o XP da própria criança. Há um botão de apoio "um adulto me ajudou".
+- Arrastar/ligar também funcionam por toque/clique (acessibilidade e telas de toque).
+- Sem tempo real (o projeto não tem): o painel do professor faz polling a cada 20s.
+- Aulas 22, 23 e 26 usam o editor da Fase 9; inserção de imagem e "apresentação" são simuladas nas
+  atividades (o editor não tem imagens/slides).
+- **Nenhum vídeo do LAB foi produzido** (infra reaproveitada; o admin anexa na tela Formação).
+- Sem QR code no certificado (só código + página de validação). Sem rate limit na validação pública.
+- Rotas antigas de relatório/trabalhos continuam com visibilidade ampla da equipe (lacuna anterior,
+  não alterada); as rotas NOVAS do LAB aplicam escopo por turma/escola.
+- Níveis infantis: 0/300/700/1200/1800/2500 XP; o XP do programa soma ~2.700 e só atinge "Mestre
+  Digital" ao concluir o desafio final (garantido por teste).
+- Testes novos: `lab-content`, `lab-solver` (toda atividade é resolvível), `lab-rules`,
+  `lab-api-authorization`, `lab-seed`, `lab-queries` (programa completo de 30 aulas até o
+  certificado), `lab-monitor` (isolamento por perfil). 176 testes no total.
+
 ## Comandos
 
 ```bash
@@ -771,6 +850,7 @@ npm run build    # build de produção
 npm test         # vitest run (unit + integration, sem rede)
 npm run lint     # eslint
 npm run seed     # cria admin + escola modelo (precisa de DATABASE_URL)
+npm run seed:lab # semeia o ILTECN LAB (depois da migration; idempotente)
 ```
 
 ## Decisões técnicas e aprendizados importantes
