@@ -763,7 +763,7 @@ faixa fixa de ~25-40s dos slides antigos).
   lint`, `npx vitest run` e `npm run build` sem erros (nenhum teste depende do
   conteúdo/duração dos vídeos, só de `provider`/`video_type`/URLs).
 
-## Fase 11 — ILTECN LAB: Primeiros Passos no Computador (implementada em 2026-10-08, aguardando migration em produção)
+## Fase 11 — ILTECN LAB: Primeiros Passos no Computador (em produção desde 2026-10-08: migration + seed aplicados)
 
 Segundo programa DENTRO da mesma plataforma (não é um segundo sistema): alfabetização digital
 para crianças/iniciantes, 6 módulos, 30 aulas, 30h, com atividades interativas, XP, medalhas,
@@ -841,6 +841,15 @@ Conquistar, guia **LIA** com mensagens prontas), `/dashboard/lab/certificado`,
 - Testes novos: `lab-content`, `lab-solver` (toda atividade é resolvível), `lab-rules`,
   `lab-api-authorization`, `lab-seed`, `lab-queries` (programa completo de 30 aulas até o
   certificado), `lab-monitor` (isolamento por perfil). 176 testes no total.
+
+### Redefinição de senha de aluno (2026-10-08)
+`POST /api/students/[id]/reset-password` (admin/professor/coordenador) gera uma senha provisória
+de 8 caracteres (ou aceita `password` informada) e a devolve **uma única vez**; no banco fica só o
+hash. Escopo no SQL (`resetStudentPassword`, `src/modules/students/queries.ts`): admin = todos,
+coordenador = sua escola, professor = alunos ativos nas suas turmas; fora do escopo = 404. Botão
+"Redefinir senha" na tela Alunos. Sem e-mail (o projeto não tem serviço de envio); "esqueci minha
+senha" por link fica como evolução. Testes: `student-password-reset` (integração) e
+`student-password-reset-authorization` (rota). 187 testes.
 
 ## Comandos
 

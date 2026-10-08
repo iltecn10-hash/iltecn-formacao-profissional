@@ -75,3 +75,57 @@ export async function isKidsStudent(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+export interface PasswordResetActor {
+  userId: string;
+  role: string;
+}
+
+/**
+ * Redefine a senha de um ALUNO. O escopo é decidido no SQL, não na tela:
+ *  - admin: qualquer aluno;
+ *  - coordenador: alunos da sua escola;
+ *  - professor: alunos matriculados (ativos) nas SUAS turmas;
+ *  - demais perfis: ninguém.
+ * Devolve o aluno afetado, ou `null` se não existe ou está fora do escopo
+ * (os dois casos são indistinguíveis de propósito).
+ */
+export async function resetStudentPassword(
+  actor: PasswordResetActor,
+  studentId: string,
+  newPassword: string
+): Promise<{ name: string; email: string } | null> {
+  let scope: string;
+  let joins = "";
+  const params: unknown[] = [studentId];
+  if (actor.role === "admin") {
+    scope = "";
+  } else if (actor.role === "coordinator") {
+    params.push(actor.userId);
+    scope = `AND s.school_id IN (SELECT school_id FROM coordinators WHERE user_id = $2::uuid)`;
+  } else if (actor.role === "teacher") {
+    params.push(actor.userId);
+    // JOIN em vez de subquery correlacionada (o pg-mem dos testes não resolve esta última).
+    joins =
+      "JOIN enrollments e ON e.student_id = s.id AND e.status = 'active' JOIN classes cl ON cl.id = e.class_id JOIN teachers t ON t.id = cl.teacher_id";
+    scope = `AND t.user_id = $2::uuid`;
+  } else {
+    return null;
+  }
+
+  const target = await queryOne<{ user_id: string; name: string; email: string }>(
+    `SELECT s.user_id, u.name, u.email
+     FROM students s JOIN users u ON u.id = s.user_id ${joins}
+     WHERE s.id = $1::uuid AND u.role = 'student' ${scope}
+     LIMIT 1`,
+    params
+  );
+  if (!target) return null;
+
+  const hash = await hashPassword(newPassword);
+  await query(`UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2::uuid`, [
+    hash,
+    target.user_id,
+  ]);
+  return { name: target.name, email: target.email };
+}

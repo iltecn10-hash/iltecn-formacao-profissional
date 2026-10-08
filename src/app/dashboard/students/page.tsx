@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { listStudents } from "@/modules/students/queries";
 import { listSchools } from "@/modules/schools/queries";
 import { StudentForm } from "@/components/student-form";
+import { ResetPasswordButton } from "@/components/reset-password-button";
 
 export default async function StudentsPage() {
   const session = await getSession();
@@ -37,12 +38,13 @@ export default async function StudentsPage() {
               <th className="px-5 py-3 font-medium text-muted">E-mail</th>
               <th className="px-5 py-3 font-medium text-muted">Nível</th>
               <th className="px-5 py-3 font-medium text-muted">Pontos</th>
+              <th className="px-5 py-3 font-medium text-muted">Acesso</th>
             </tr>
           </thead>
           <tbody>
             {students.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-8 text-center text-muted">
+                <td colSpan={5} className="px-5 py-8 text-center text-muted">
                   Nenhum aluno cadastrado ainda.
                 </td>
               </tr>
@@ -53,6 +55,9 @@ export default async function StudentsPage() {
                 <td className="px-5 py-3 text-muted">{s.email}</td>
                 <td className="px-5 py-3 text-muted">{s.level}</td>
                 <td className="px-5 py-3 text-muted">{s.points}</td>
+                <td className="px-5 py-3">
+                  <ResetPasswordButton studentId={s.id} studentName={s.name ?? s.email ?? "aluno"} />
+                </td>
               </tr>
             ))}
           </tbody>

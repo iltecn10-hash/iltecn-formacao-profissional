@@ -23,7 +23,8 @@ export function createTestDb() {
       password_hash VARCHAR(255) NOT NULL,
       name VARCHAR(255) NOT NULL,
       role VARCHAR(20) NOT NULL,
-      active BOOLEAN NOT NULL DEFAULT true
+      active BOOLEAN NOT NULL DEFAULT true,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
     CREATE TABLE schools (
