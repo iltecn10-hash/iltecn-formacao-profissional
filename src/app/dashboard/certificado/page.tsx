@@ -34,7 +34,7 @@ export default async function CertificadoPage() {
 
       <div className="mt-8 rounded-lg border-2 border-primary bg-surface p-10 text-center">
         <p className="text-sm font-semibold tracking-wide text-primary">
-          ILTECN — FORMAÇÃO PROFISSIONAL
+          ILTECN — PLATAFORMA DE ALFABETIZAÇÃO DIGITAL
         </p>
         <h2 className="mt-6 font-heading text-xl text-muted">
           Certificado de Participação

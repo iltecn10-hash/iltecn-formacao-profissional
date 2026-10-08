@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ILTECN — Formação Profissional",
+  title: "ILTECN — Plataforma de Alfabetização Digital",
   description: "Aprender fazendo. Preparar para o futuro.",
 };
 

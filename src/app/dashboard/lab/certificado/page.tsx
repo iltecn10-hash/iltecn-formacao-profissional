@@ -30,7 +30,7 @@ export default async function CertificadoLabPage() {
         <PrintButton />
       </div>
       <div className="mt-6 rounded-3xl border-4 border-primary bg-surface p-10 text-center">
-        <p className="text-sm font-bold tracking-widest text-primary">ILTECN — FORMAÇÃO PROFISSIONAL</p>
+        <p className="text-sm font-bold tracking-widest text-primary">ILTECN — PLATAFORMA DE ALFABETIZAÇÃO DIGITAL</p>
         <h1 className="mt-6 font-heading text-3xl font-bold">Certificado de Conclusão</h1>
         <p className="mt-6 text-lg">Certificamos que</p>
         <p className="mt-2 font-heading text-3xl font-bold text-primary-dark">{cert.studentName}</p>

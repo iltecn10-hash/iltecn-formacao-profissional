@@ -6,7 +6,7 @@ export default function LoginPage() {
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-primary px-14 py-12 text-white lg:flex">
         <div>
           <p className="text-sm font-semibold tracking-wide text-primary-light/90">
-            ILTECN
+            ILTECN — Plataforma de Alfabetização Digital
           </p>
           <h1 className="mt-16 max-w-md font-heading text-4xl font-bold leading-tight">
             Você está chegando para o seu primeiro dia de trabalho.
@@ -32,7 +32,7 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-sm">
           <div className="mb-10 lg:hidden">
             <p className="text-sm font-semibold text-primary">ILTECN</p>
-            <p className="text-xs text-muted">Formação Profissional</p>
+            <p className="text-xs text-muted">Plataforma de Alfabetização Digital</p>
           </div>
 
           <h2 className="font-heading text-2xl font-bold text-foreground">

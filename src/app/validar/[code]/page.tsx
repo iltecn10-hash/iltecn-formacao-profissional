@@ -9,7 +9,7 @@ export default async function ValidarPage({ params }: { params: Promise<{ code: 
 
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-6 py-10">
-      <p className="text-sm font-bold tracking-widest text-primary">ILTECN — FORMAÇÃO PROFISSIONAL</p>
+      <p className="text-sm font-bold tracking-widest text-primary">ILTECN — PLATAFORMA DE ALFABETIZAÇÃO DIGITAL</p>
       <h1 className="mt-2 font-heading text-3xl font-bold">Validação de certificado</h1>
       {cert ? (
         <div className="mt-6 rounded-3xl border-4 border-primary bg-surface p-6">

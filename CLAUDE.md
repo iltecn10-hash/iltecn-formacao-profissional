@@ -2,6 +2,8 @@
 
 # ILTECN — Formação Profissional
 
+> **Nome exibido da plataforma (desde 2026-10-08): "ILTECN — Plataforma de Alfabetização Digital"** (título da página, login, menu lateral, validação e certificados). Só texto de interface: repositório, projeto Vercel/Neon, banco e nomes dos programas ("Formação Profissional", "ILTECN LAB — Primeiros Passos no Computador") não mudaram.
+
 Plataforma educacional de simulação profissional: `APRENDER → PRATICAR → RESOLVER → AVALIAR → EVOLUIR`.
 Empresa fictícia usada nas atividades práticas: **Supermercado Bom Preço**.
 

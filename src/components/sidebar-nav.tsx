@@ -127,7 +127,7 @@ export function SidebarNav({
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-surface px-4 py-6">
       <div className="px-2">
         <p className="font-heading text-lg font-bold text-primary">ILTECN</p>
-        <p className="text-xs text-muted">Formação Profissional</p>
+        <p className="text-xs text-muted">Plataforma de Alfabetização Digital</p>
       </div>
 
       <nav className="mt-8 flex flex-1 flex-col gap-1">
