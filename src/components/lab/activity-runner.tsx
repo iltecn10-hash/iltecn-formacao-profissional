@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import type { ActivityKind, PublicConfig } from "@/lib/lab/activities";
 import type { LabActivityView, SubmitActivityResult } from "@/modules/lab/queries";
 import { Lia, LIA_MESSAGES } from "./lia";
 import { primaryBtn, softBtn, chip } from "./ui";
@@ -9,12 +10,13 @@ import { DesktopActivity, DrawActivity, FilesActivity, GestureActivity } from ".
 
 type Cfg = Record<string, unknown>;
 
-function Interactive({
+/** Renderiza a interação de um tipo de atividade. Também é usado pela Central de Jogos. */
+export function Interactive({
   activity,
   disabled,
   onSubmit,
 }: {
-  activity: LabActivityView;
+  activity: { kind: ActivityKind; config: PublicConfig };
   disabled: boolean;
   onSubmit: (s: unknown) => void;
 }) {

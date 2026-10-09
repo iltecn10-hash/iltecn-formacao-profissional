@@ -13,6 +13,7 @@ interface NavItem {
 /** Menu enxuto do aluno do ILTECN LAB (crianças): poucas opções, nomes simples. */
 const KIDS_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/lab", label: "🏠 Meu painel", roles: ["student"] },
+  { href: "/dashboard/jogos", label: "🎮 Jogos", roles: ["student"] },
   { href: "/dashboard/lab/certificado", label: "🎓 Certificado", roles: ["student"] },
 ];
 
@@ -36,6 +37,11 @@ const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/missoes",
     label: "Missões",
     roles: ["student"],
+  },
+  {
+    href: "/dashboard/jogos",
+    label: "Jogos",
+    roles: ["admin", "teacher", "student", "coordinator"],
   },
   {
     href: "/dashboard/trabalhos",

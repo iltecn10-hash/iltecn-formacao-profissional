@@ -9,6 +9,7 @@
     "lint": "eslint",
     "seed": "node --env-file=.env.local --import tsx scripts/seed.ts",
     "seed:lab": "node --env-file=.env.local --import tsx scripts/seed-lab.ts",
+    "seed:games": "node --env-file=.env.local --import tsx scripts/seed-games.ts",
     "test": "vitest run"
   },
   "dependencies": {

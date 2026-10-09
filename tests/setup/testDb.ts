@@ -187,6 +187,7 @@ export function createTestDb() {
       criteria_track_id UUID REFERENCES tracks(id),
       criteria_mission_id UUID REFERENCES missions(id),
       criteria_skill VARCHAR(20),
+      criteria_game_id UUID,
       audience VARCHAR(20) NOT NULL DEFAULT 'professional'
     );
 
@@ -221,6 +222,66 @@ export function createTestDb() {
       completed_at TIMESTAMP,
       last_attempt_at TIMESTAMP NOT NULL DEFAULT now(),
       PRIMARY KEY (student_id, activity_id)
+    );
+
+    CREATE TABLE games (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      code VARCHAR(80) NOT NULL UNIQUE,
+      title VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      instructions TEXT NOT NULL DEFAULT '',
+      audience VARCHAR(20) NOT NULL DEFAULT 'all',
+      difficulty VARCHAR(10) NOT NULL DEFAULT 'facil',
+      game_type VARCHAR(20) NOT NULL DEFAULT 'mixed',
+      track_id UUID REFERENCES tracks(id),
+      module_id UUID REFERENCES modules(id),
+      mission_id UUID REFERENCES missions(id),
+      requires_mission_id UUID REFERENCES missions(id),
+      requires_game_id UUID,
+      completes_mission BOOLEAN NOT NULL DEFAULT false,
+      pass_percent INTEGER NOT NULL DEFAULT 70,
+      max_attempts INTEGER,
+      time_limit_seconds INTEGER,
+      xp_reward INTEGER NOT NULL DEFAULT 50,
+      config JSONB NOT NULL DEFAULT '{"phases": []}',
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      status VARCHAR(12) NOT NULL DEFAULT 'draft',
+      created_by UUID,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE game_attempts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      game_id UUID NOT NULL REFERENCES games(id),
+      student_id UUID NOT NULL REFERENCES students(id),
+      status VARCHAR(12) NOT NULL DEFAULT 'in_progress',
+      state JSONB NOT NULL DEFAULT '{}',
+      version INTEGER NOT NULL DEFAULT 0,
+      started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      expires_at TIMESTAMPTZ,
+      finished_at TIMESTAMPTZ,
+      ended_reason VARCHAR(12),
+      score_percent INTEGER,
+      points INTEGER,
+      points_possible INTEGER,
+      correct_count INTEGER,
+      wrong_count INTEGER,
+      duration_seconds INTEGER,
+      xp_awarded INTEGER NOT NULL DEFAULT 0,
+      result JSONB
+    );
+
+    CREATE TABLE student_game_progress (
+      student_id UUID NOT NULL REFERENCES students(id),
+      game_id UUID NOT NULL REFERENCES games(id),
+      attempts INTEGER NOT NULL DEFAULT 0,
+      best_percent INTEGER NOT NULL DEFAULT 0,
+      completed BOOLEAN NOT NULL DEFAULT false,
+      completed_at TIMESTAMPTZ,
+      xp_awarded INTEGER NOT NULL DEFAULT 0,
+      last_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (student_id, game_id)
     );
 
     CREATE TABLE track_certificates (

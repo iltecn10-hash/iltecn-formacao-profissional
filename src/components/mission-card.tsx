@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { MissionAttemptStatus, MissionTaskWithVideo, MissionVideo, MissionWorkConfig } from "@/types";
 import { MissionStepRow } from "@/components/mission-step-row";
@@ -35,6 +36,7 @@ export function MissionCard({
   workConfig,
   tasks,
   video,
+  game,
 }: {
   id: string;
   title: string;
@@ -49,6 +51,8 @@ export function MissionCard({
   tasks: MissionTaskWithVideo[];
   /** Vídeo explicativo da missão como um todo, quando houver (Fase 10.5). */
   video: MissionVideo | null;
+  /** Jogo educativo vinculado a esta missão (Central de Jogos), quando houver. */
+  game?: { id: string; title: string } | null;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -177,6 +181,17 @@ export function MissionCard({
               <MissionStepRow key={task.id} index={i + 1} task={task} />
             ))}
           </div>
+        </div>
+      )}
+
+      {game && currentStatus !== "bloqueada" && (
+        <div className="mt-3">
+          <Link
+            href={`/dashboard/jogos/${game.id}`}
+            className="inline-block rounded-md border border-primary px-3.5 py-2 text-sm font-medium text-primary transition hover:bg-primary-light focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/50"
+          >
+            🎮 Jogar: {game.title}
+          </Link>
         </div>
       )}
 

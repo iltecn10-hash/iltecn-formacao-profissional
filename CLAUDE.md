@@ -853,6 +853,106 @@ coordenador = sua escola, professor = alunos ativos nas suas turmas; fora do esc
 senha" por link fica como evolução. Testes: `student-password-reset` (integração) e
 `student-password-reset-authorization` (rota). 187 testes.
 
+## Central de Jogos Educativos (2026-10-09; migration `migrations/2026-10-09_games.sql`)
+
+Motor reutilizável de jogos DENTRO da plataforma (não é um segundo sistema). Um jogo é uma sequência
+de **fases**, cada fase com **desafios**; o desafio reaproveita os 9 tipos de atividade do ILTECN LAB
+(`choice`, `match`, `order`, `drag`, `type`, `files`, `gesture`, `draw`, `desktop`) e o MESMO corretor
+(`gradeActivity` em `src/lib/lab/activities.ts`) — verdadeiro/falso = `choice` com 2 opções; decisão com
+consequência = `choice` + `explain`. XP, nível, conquistas e missões são os que já existiam.
+
+### Arquitetura
+- `src/lib/games/engine.ts` — funções PURAS: schemas Zod (`gameConfigSchema`), `validateGameConfig`,
+  `toPublicPhases` (versão SEM gabarito/explicação), estado da partida (`readState`), `applyGrade`,
+  `triesFactor`, `summarize`, `isPhaseOpen`, `evaluateFinish`, `starsFor`, `buildGuidance`.
+- `src/lib/games/types.ts` — `gameMetaSchema` (campos editáveis pelo admin) e tipos das telas.
+- `src/lib/games/content/explorador-digital.ts` — jogo-piloto (`GAME_SEEDS`).
+- `src/modules/games/queries.ts` — aluno: `listGamesForStudent`, `getGameDetail`, `startAttempt`,
+  `submitChallenge`, `finishAttempt`, `listPublishedGamesByMission`. Tudo que decide nota/XP/liberação roda aqui.
+- `src/modules/games/results.ts` — equipe: `getGameResults`, `listScopedStudents` (escopo no SQL),
+  `listGamesForStaff`, `listActorClasses`. `src/modules/games/admin.ts` — CRUD do admin + `loadAdminOptions`.
+- `src/modules/games/seed.ts` + `scripts/seed-games.ts` (`npm run seed:games [-- --overwrite | -- --sql]`).
+- Componentes: `src/components/games/{game-player,game-results-view,game-admin-form}.tsx`;
+  `Interactive` (de `components/lab/activity-runner.tsx`) é exportado e compartilhado com o LAB.
+
+### Dados (migration aditiva e idempotente)
+`games` (config JSONB com as fases, `status` draft|published, vínculos opcionais `track_id`/`module_id`/
+`mission_id`, pré-requisitos `requires_mission_id`/`requires_game_id`, `completes_mission`, `pass_percent`,
+`max_attempts`, `time_limit_seconds`, `xp_reward`, `audience`), `game_attempts` (histórico: estado da
+partida, `version` p/ concorrência otimista, notas, tempo, `result` JSONB; índice único parcial = no máximo
+UMA partida em andamento por aluno/jogo), `student_game_progress` (tentativas, melhor nota, `completed`),
+`achievements.criteria_game_id` + critério `'game_completed'`. **Não há tabela de XP nova**: continua
+`students.points` + `scores`. Rollback manual comentado no fim do SQL.
+
+### Regras (todas no servidor)
+- **Nota**: pontos por desafio × fator da tentativa (1ª 100%, 2ª 70%, 3ª 50%, 4ª+ 40%); esgotar as
+  tentativas do desafio = 0. Velocidade NUNCA entra. `percent = pontos ganhos / pontos possíveis`.
+- **Aprovação**: todos os desafios resolvidos + nenhuma fase abaixo do seu `minPercent` + `percent >= pass_percent`.
+  Estrelas: ≥95% = 3, ≥85% = 2, aprovado = 1. Fase abaixo do mínimo **trava** a partida (só dá para encerrar
+  e ver orientações; nova partida recomeça).
+- **Liberação de fases**: `isPhaseOpen` — a fase N só abre com as anteriores resolvidas e no mínimo. Fases
+  bloqueadas chegam ao navegador SEM os desafios, e `submitChallenge` recusa (423) mesmo assim.
+- **Liberação do jogo**: `requires_mission_id` (missão `concluida`) e `requires_game_id` (jogo concluído).
+  NÃO altera a lógica de liberação dos cursos/missões.
+- **Tentativas/tempo**: `max_attempts` conta partidas encerradas (`limit`/HTTP 429); `time_limit_seconds`
+  define `expires_at`; partida vencida é encerrada como `time` (sem XP) na próxima leitura/resposta.
+- **XP uma única vez por aluno/jogo**: `UPDATE student_game_progress SET completed = true ... WHERE completed = false`
+  (trava de idempotência) + `UPDATE game_attempts ... WHERE status = 'in_progress'` ao encerrar. Repetir ou
+  clicar duas vezes devolve o resultado salvo sem pagar de novo. Medalha por `criteria_game_id`
+  (`ON CONFLICT DO NOTHING`). Jogar de novo depois de concluir é prática (entra no histórico, sem XP).
+- **Integração com missão**: jogo com `mission_id` + `completes_mission` chama `completeMissionAttempt()`
+  (idempotente) DEPOIS do commit do jogo, só se aprovado — a missão paga os pontos dela UMA vez, além do
+  XP do jogo. O cartão da missão (`MissionCard`) mostra "🎮 Jogar" quando há jogo publicado vinculado.
+- **Segurança**: o navegador só envia `challengeId` + `submission`; nota/XP/estado nunca vêm do cliente.
+  `toPublicPhases` remove gabaritos e explicações (a explicação só volta DEPOIS de resolver o desafio).
+  Corpo limitado (32 KB; admin 512 KB). Erros internos não vazam detalhes.
+
+### Rotas
+Aluno: `GET /api/games`, `GET /api/games/[id]`, `POST /api/games/[id]/start`,
+`POST /api/games/attempts/[attemptId]/answer`, `POST /api/games/attempts/[attemptId]/finish`.
+Equipe: `GET /api/games` (lista), `GET /api/games/[id]/results?classId=` (admin/professor/coordenador).
+Admin: `GET|POST /api/admin/games`, `GET|PUT /api/admin/games/[id]`, `POST /api/admin/games/[id]/status`.
+Telas: `/dashboard/jogos` (aluno: cartões; equipe: lista + resultados; admin: + Novo/Editar),
+`/dashboard/jogos/[id]` (aluno: jogador; equipe: painel de resultados), `/novo`, `/[id]/editar` (admin).
+
+### Painéis
+- **Professor/coordenador/admin** (`getGameResults`): iniciaram/concluíram/em andamento, nota média, tentativas,
+  desafios com mais erros, habilidades médias, evolução por aluno, "precisam de apoio" (≥2 tentativas sem
+  aprovação ou última partida muito baixa). **Escopo no SQL**: admin todos · coordenador a escola · professor
+  suas turmas · outros nada; só números (nenhuma resposta de aluno é exposta). Rascunho: só o admin.
+- **Admin** (`/dashboard/jogos/novo|editar`): metadados, vínculo com trilha/módulo/missão, dificuldade, nota
+  mínima, tentativas, tempo, XP, pré-requisitos, publicar/despublicar e as fases como JSON validado ao vivo
+  (não é um CMS completo). Publicar exige configuração válida; "remover" = despublicar (histórico preservado).
+  Só o admin cria/edita jogos; professor/coordenador só acompanham resultados.
+
+### Jogo-piloto: "Desafio do Explorador Digital" (`desafio-explorador-digital`)
+6 fases / 17 desafios, público `all`, 100 XP, aprovação 70%: componentes (arrastar, escolher, ligar), teclas
+(ligar, escolher teclas, digitar), arquivos (simulador de pastas + escolha), salvar documento (ordenar, escolher,
+copiar nome), internet segura (arrastar seguro/perigoso, decisão com consequência, múltipla escolha) e desafio
+final combinado (janelas, pastas, ordenar, decisão). Medalha "Explorador Digital" (uma por público).
+
+### Como criar um novo jogo
+1. Escolha os desafios entre os 9 tipos do LAB (config com gabarito igual à das atividades — ver `CONFIG_SCHEMAS`).
+2. **Pelo painel (admin)**: `/dashboard/jogos/novo`, cole o JSON `{ "phases": [...] }`, ajuste regras/vínculos, salve e publique.
+3. **Pelo código**: crie `src/lib/games/content/<jogo>.ts` exportando um `GameSeed`, inclua em `GAME_SEEDS` e rode
+   `npm run seed:games` (cria só o que falta; `--overwrite` reaplica; `--sql` imprime o SQL equivalente).
+4. Cubra com `tests/unit/games-engine.test.ts`-style: toda resposta certa é aceita (`solve` de `tests/setup/labSolver.ts`).
+Novo TIPO de desafio = novo `kind` em `src/lib/lab/activities.ts` (schema + `toPublicConfig` + `gradeActivity`) e
+componente em `components/lab/` + `Interactive`; os jogos herdam sem mudar o motor.
+
+### Migração e deploy
+Ordem: **migration → seed → deploy do código** (o código consulta as tabelas novas). Migration via Neon MCP
+`prepare_database_migration` (branch temporária) + `complete_database_migration` (sempre com confirmação do usuário).
+O seed de produção pode ser aplicado com `npm run seed:games -- --sql` (SQL idempotente) por quem não alcança o Neon.
+
+### Testes (250 no total)
+`games-engine` (motor puro, piloto resolvível, gabarito não vaza), `games-queries` (carregar, iniciar/retomar,
+fases/bloqueio, tentativas, tempo, XP uma vez, duplo clique, histórico, melhor nota, liberação por missão/jogo,
+conclusão de missão, administração), `games-results` (isolamento por escola/turma/perfil, indicadores),
+`games-api-authorization` (papéis, validação, nota/XP do cliente ignorados), `games-seed-sql`.
+Limitação conhecida: a disputa real de duas respostas simultâneas é protegida por `WHERE version = N` e pelo
+índice único parcial, mas o pg-mem não reproduz concorrência real — não há teste de corrida de verdade.
+
 ## Comandos
 
 ```bash
@@ -862,6 +962,7 @@ npm test         # vitest run (unit + integration, sem rede)
 npm run lint     # eslint
 npm run seed     # cria admin + escola modelo (precisa de DATABASE_URL)
 npm run seed:lab # semeia o ILTECN LAB (depois da migration; idempotente)
+npm run seed:games # semeia a Central de Jogos (depois da migration 2026-10-09; idempotente)
 ```
 
 ## Decisões técnicas e aprendizados importantes

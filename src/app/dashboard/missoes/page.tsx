@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getStudentIdByUserId, isKidsStudent } from "@/modules/students/queries";
 import { getStudentProgress } from "@/modules/missions/queries";
+import { listPublishedGamesByMission } from "@/modules/games/queries";
 import { MissionCard } from "@/components/mission-card";
 
 export default async function MissoesPage() {
@@ -14,6 +15,8 @@ export default async function MissoesPage() {
 
   const studentId = await getStudentIdByUserId(session.userId);
   const tracks = studentId ? await getStudentProgress(studentId) : [];
+  const missionIds = tracks.flatMap((t) => t.modules.flatMap((m) => m.missions.map((mi) => mi.id)));
+  const gamesByMission = await listPublishedGamesByMission(missionIds, "professional");
 
   return (
     <div>
@@ -57,6 +60,7 @@ export default async function MissoesPage() {
                         workConfig={mission.work_config}
                         tasks={mission.tasks}
                         video={mission.video}
+                        game={gamesByMission[mission.id] ?? null}
                       />
                     ))}
                   </div>
