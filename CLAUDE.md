@@ -926,7 +926,7 @@ Telas: `/dashboard/jogos` (aluno: cartões; equipe: lista + resultados; admin: +
   Só o admin cria/edita jogos; professor/coordenador só acompanham resultados.
 
 ### Jogo-piloto: "Desafio do Explorador Digital" (`desafio-explorador-digital`)
-6 fases / 17 desafios, público `all`, 100 XP, aprovação 70%: componentes (arrastar, escolher, ligar), teclas
+6 fases / 18 desafios, público `all`, 100 XP, aprovação 70%: componentes (arrastar, escolher, ligar), teclas
 (ligar, escolher teclas, digitar), arquivos (simulador de pastas + escolha), salvar documento (ordenar, escolher,
 copiar nome), internet segura (arrastar seguro/perigoso, decisão com consequência, múltipla escolha) e desafio
 final combinado (janelas, pastas, ordenar, decisão). Medalha "Explorador Digital" (uma por público).
