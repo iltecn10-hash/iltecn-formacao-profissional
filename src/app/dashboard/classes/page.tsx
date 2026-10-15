@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { listClasses } from "@/modules/classes/queries";
 import { listSchools } from "@/modules/schools/queries";
 import { listTeachers } from "@/modules/teachers/queries";
+import { getActorSchoolId } from "@/modules/schools/scope";
 import { ClassForm } from "@/components/class-form";
 
 const shiftLabel: Record<string, string> = {
@@ -18,11 +19,16 @@ export default async function ClassesPage() {
     redirect("/dashboard");
   }
 
-  const [classes, schools, teachers] = await Promise.all([
-    listClasses(),
+  const actor = { userId: session.userId, role: session.role };
+  const [classes, allSchools, teachers] = await Promise.all([
+    listClasses(actor),
     listSchools(),
-    listTeachers(),
+    listTeachers(actor),
   ]);
+  // Professor só escolhe a própria escola no formulário (a rota também confere no servidor).
+  const mySchoolId = session.role === "admin" ? null : await getActorSchoolId(actor);
+  const schools =
+    session.role === "admin" ? allSchools : allSchools.filter((sc) => sc.id === mySchoolId);
   const canCreate = session.role === "admin" || session.role === "teacher";
 
   return (

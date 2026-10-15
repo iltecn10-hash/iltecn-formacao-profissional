@@ -8,7 +8,10 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
-  const teachers = await listTeachers();
+  if (session.role === "student") {
+    return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
+  }
+  const teachers = await listTeachers({ userId: session.userId, role: session.role });
   return NextResponse.json({ teachers });
 }
 

@@ -10,7 +10,7 @@ export default async function TeachersPage() {
     redirect("/dashboard");
   }
 
-  const [teachers, schools] = await Promise.all([listTeachers(), listSchools()]);
+  const [teachers, schools] = await Promise.all([listTeachers({ userId: session.userId, role: session.role }), listSchools()]);
 
   return (
     <div>

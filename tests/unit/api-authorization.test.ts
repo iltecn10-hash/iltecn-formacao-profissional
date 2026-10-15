@@ -22,6 +22,10 @@ vi.mock("@/modules/students/queries", () => ({
   getStudentIdByUserId: vi.fn().mockResolvedValue("student-own-id"),
 }));
 
+vi.mock("@/modules/schools/scope", () => ({
+  canActorUseSchool: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock("@/modules/missions/queries", () => ({
   listMissionsByModule: vi.fn().mockResolvedValue([]),
   createMission: vi.fn().mockResolvedValue({ id: "mission-1" }),

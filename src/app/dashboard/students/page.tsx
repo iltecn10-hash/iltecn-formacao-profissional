@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { listStudents } from "@/modules/students/queries";
 import { listSchools } from "@/modules/schools/queries";
+import { getActorSchoolId } from "@/modules/schools/scope";
 import { StudentForm } from "@/components/student-form";
 import { ResetPasswordButton } from "@/components/reset-password-button";
 
@@ -11,7 +12,12 @@ export default async function StudentsPage() {
     redirect("/dashboard");
   }
 
-  const [students, schools] = await Promise.all([listStudents(), listSchools()]);
+  const actor = { userId: session.userId, role: session.role };
+  const [students, allSchools] = await Promise.all([listStudents(actor), listSchools()]);
+  // Professor só cadastra na própria escola (a rota também confere no servidor).
+  const mySchoolId = session.role === "admin" ? null : await getActorSchoolId(actor);
+  const schools =
+    session.role === "admin" ? allSchools : allSchools.filter((sc) => sc.id === mySchoolId);
   const canCreate = session.role === "admin" || session.role === "teacher";
 
   return (
