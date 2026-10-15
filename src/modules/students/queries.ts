@@ -1,14 +1,23 @@
 import { query, queryOne } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
+import { schoolScope, type ScopeActor } from "@/modules/schools/scope";
 import type { Student } from "@/types";
 
-export async function listStudents(): Promise<Student[]> {
+/**
+ * Alunos que ESTE usuário pode ver (escopo no SQL): admin todos; coordenador e
+ * professor só os da própria escola; aluno e demais perfis, nenhum.
+ */
+export async function listStudents(actor: ScopeActor): Promise<Student[]> {
+  const scope = schoolScope(actor, "s.school_id");
+  if (!scope) return [];
   return query<Student>(
     `SELECT s.id, s.user_id, s.school_id, s.birth_date, s.guardian_name,
             s.guardian_contact, s.level, s.points, u.name, u.email
      FROM students s
      JOIN users u ON u.id = s.user_id
-     ORDER BY u.name ASC`
+     ${scope.where ? `WHERE ${scope.where}` : ""}
+     ORDER BY u.name ASC`,
+    scope.params
   );
 }
 

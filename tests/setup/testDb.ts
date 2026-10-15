@@ -38,13 +38,17 @@ export function createTestDb() {
       school_id UUID NOT NULL REFERENCES schools(id),
       level INTEGER NOT NULL DEFAULT 1,
       points INTEGER NOT NULL DEFAULT 0,
-      audience VARCHAR(20) NOT NULL DEFAULT 'professional'
+      audience VARCHAR(20) NOT NULL DEFAULT 'professional',
+      birth_date DATE,
+      guardian_name VARCHAR(255),
+      guardian_contact VARCHAR(255)
     );
 
     CREATE TABLE teachers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id UUID NOT NULL REFERENCES users(id),
-      school_id UUID REFERENCES schools(id)
+      school_id UUID REFERENCES schools(id),
+      bio TEXT
     );
 
     CREATE TABLE coordinators (
@@ -58,6 +62,7 @@ export function createTestDb() {
       school_id UUID NOT NULL REFERENCES schools(id),
       teacher_id UUID REFERENCES teachers(id),
       name VARCHAR(255) NOT NULL,
+      shift VARCHAR(20),
       school_year INTEGER NOT NULL DEFAULT 2026,
       active BOOLEAN NOT NULL DEFAULT true
     );

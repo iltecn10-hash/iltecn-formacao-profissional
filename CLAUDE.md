@@ -76,7 +76,20 @@ if (!session || session.role !== "papel_esperado") {
 
 Para recursos "do próprio aluno" (relatório, trabalhos), o aluno só pode ver o que é seu
 (compara `session.userId` → `getStudentIdByUserId` → `student_id` do recurso); demais perfis
-(admin/professor/coordenador) podem ver qualquer aluno — não há hoje restrição por turma.
+(admin/professor/coordenador) ainda podem ver qualquer aluno nas rotas de relatório/trabalhos
+(sem restrição por turma). As LISTAGENS de alunos/professores/turmas já têm escopo por escola
+(ver "Etapa 0 — escopo das listagens").
+
+### Etapa 0 — escopo das listagens (2026-10-15, preparação do módulo Conselho de Classe)
+- `src/modules/schools/scope.ts`: `schoolScope(actor, coluna)` (escopo por escola **no SQL**: admin tudo;
+  coordenador/professor a escola do próprio cadastro; aluno e demais = nada; coordenador sem escola = nada),
+  `getActorSchoolId`, `canActorUseSchool` (admin qualquer escola; professor só a própria).
+- `listStudents/listTeachers/listClasses` agora exigem o ator (`{ userId, role }` da SESSÃO). `GET /api/students|teachers|classes`
+  devolvem 403 para aluno. Antes, qualquer usuário logado (inclusive aluno) listava tudo, com dados de responsáveis.
+- `POST /api/classes` confere a escola no servidor (professor só a própria) e que o professor indicado pertence a ela;
+  `POST /api/students` idem. As páginas Alunos/Turmas só oferecem a escola do professor no formulário.
+- `listClasses`: `student_count` virou `LEFT JOIN` com tabela derivada (mesmo resultado; o pg-mem não resolve a subquery).
+- Testes: `list-scope` (integração, isolamento por escola/perfil) e `list-scope-authorization` (rotas). 274 testes.
 
 ## Fluxo de missões (motor reaproveitado pela Fase 9)
 

@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { listStudents, createStudent } from "@/modules/students/queries";
+import { canActorUseSchool } from "@/modules/schools/scope";
 
 export async function GET() {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
-  const students = await listStudents();
+  if (session.role === "student") {
+    return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
+  }
+  const students = await listStudents({ userId: session.userId, role: session.role });
   return NextResponse.json({ students });
 }
 
@@ -38,6 +42,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Dados inválidos." },
       { status: 400 }
+    );
+  }
+
+  // A escola vem do corpo: professor só cadastra aluno na própria escola.
+  if (!(await canActorUseSchool({ userId: session.userId, role: session.role }, parsed.data.schoolId))) {
+    return NextResponse.json(
+      { error: "Você não tem permissão para cadastrar alunos nesta escola." },
+      { status: 403 }
     );
   }
 
