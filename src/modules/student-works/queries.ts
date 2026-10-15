@@ -2,6 +2,8 @@ import { pool, query, queryOne } from "@/lib/db";
 import type { StudentWork, StudentWorkVersion, WorkComment, WorkEvaluation, WorkType } from "@/types";
 import { sanitizeJsonValue } from "@/lib/sanitize-json";
 import { evaluateStudentWork } from "@/lib/work-evaluation";
+import { studentScope } from "@/modules/students/access";
+import type { ScopeActor } from "@/modules/schools/scope";
 
 const STUDENT_WORK_COLUMNS = `
   id, student_id, mission_id, mission_attempt_id, work_type, title,
@@ -133,10 +135,14 @@ export interface StaffWorkFilters {
 
 /** Listagem para professor/admin/coordenador (dashboard "Trabalhos dos Alunos" — Fase 9.6). */
 export async function listStudentWorksForStaff(
+  actor: ScopeActor,
   filters: StaffWorkFilters
 ): Promise<StudentWork[]> {
-  const conditions: string[] = [];
-  const params: unknown[] = [];
+  // Escopo no SQL: admin tudo · coordenador a escola · professor suas turmas/vínculos · demais nada.
+  const scope = studentScope(actor, "sw.student_id", 1);
+  if (!scope) return [];
+  const conditions: string[] = scope.where ? [scope.where] : [];
+  const params: unknown[] = [...scope.params];
 
   if (filters.studentId) {
     params.push(filters.studentId);

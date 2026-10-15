@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
+import { canAccessWork } from "@/modules/student-works/access";
 import {
+  getStudentWorkById,
   recordManualEvaluation,
   WorkNotSubmittedError,
 } from "@/modules/student-works/queries";
@@ -27,6 +29,13 @@ export async function POST(
   }
 
   const { id } = await params;
+  const work = await getStudentWorkById(id);
+  if (!work) {
+    return NextResponse.json({ error: "Trabalho não encontrado." }, { status: 404 });
+  }
+  if (!(await canAccessWork(session, work))) {
+    return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
+  }
   const json = await request.json().catch(() => null);
   const parsed = evaluateSchema.safeParse(json);
   if (!parsed.success) {

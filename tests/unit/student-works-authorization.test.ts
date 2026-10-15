@@ -26,6 +26,10 @@ const sampleWork = {
   updated_at: "2026-01-01T00:00:00Z",
 };
 
+vi.mock("@/modules/students/access", () => ({
+  canActorViewStudent: vi.fn(async () => true),
+  studentScope: vi.fn(() => ({ where: "", params: [] })),
+}));
 vi.mock("@/modules/student-works/queries", () => ({
   getOrCreateStudentWork: vi.fn().mockResolvedValue(sampleWork),
   listStudentWorksByStudent: vi.fn().mockResolvedValue([sampleWork]),
@@ -124,7 +128,7 @@ describe("GET /api/student-works/[id] — isolamento entre alunos", () => {
     expect(res.status).toBe(403);
   });
 
-  it("professor pode ver o trabalho de qualquer aluno (200)", async () => {
+  it("professor pode ver o trabalho de aluno do seu escopo (200)", async () => {
     mockGetSession.mockResolvedValue(session({ role: "teacher" }));
     const { GET } = await import("@/app/api/student-works/[id]/route");
     const res = await GET(new Request("http://localhost/api/student-works/work-1"), {

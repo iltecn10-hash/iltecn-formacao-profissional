@@ -121,16 +121,15 @@ export default async function RelatorioPage({
     );
   }
 
+  const actor = { userId: session.userId, role: session.role };
   const [students, modulePerformance] = await Promise.all([
-    listStudentsPerformance(),
-    getModulePerformance(),
+    listStudentsPerformance(actor),
+    getModulePerformance(actor),
   ]);
 
-  const selected = studentId
-    ? await getStudentReport(studentId)
-    : students[0]
-      ? await getStudentReport(students[0].student_id)
-      : null;
+  // Só abre o relatório de aluno que a lista (já filtrada por escopo) contém — o id da URL não basta.
+  const allowedId = students.find((s) => s.student_id === studentId)?.student_id ?? students[0]?.student_id;
+  const selected = allowedId ? await getStudentReport(allowedId) : null;
 
   return (
     <div>

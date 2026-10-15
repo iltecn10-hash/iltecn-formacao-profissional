@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   }
 
   const params = request.nextUrl.searchParams;
-  const works = await listStudentWorksForStaff({
+  const works = await listStudentWorksForStaff({ userId: session.userId, role: session.role }, {
     studentId: params.get("studentId") ?? undefined,
     missionId: params.get("missionId") ?? undefined,
     status: params.get("status") ?? undefined,

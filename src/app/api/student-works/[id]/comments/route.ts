@@ -1,25 +1,18 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
-import { getStudentIdByUserId } from "@/modules/students/queries";
+import { canAccessWork } from "@/modules/student-works/access";
 import {
   addWorkComment,
   getStudentWorkById,
   listWorkComments,
 } from "@/modules/student-works/queries";
 
-const STAFF_ROLES = ["admin", "teacher", "coordinator"] as const;
-
 async function authorizeAccess(workId: string, session: { userId: string; role: string }) {
   const work = await getStudentWorkById(workId);
   if (!work) return { error: "Trabalho não encontrado." as const, status: 404 as const };
 
-  if (session.role === "student") {
-    const ownStudentId = await getStudentIdByUserId(session.userId);
-    if (ownStudentId !== work.student_id) {
-      return { error: "Sem permissão." as const, status: 403 as const };
-    }
-  } else if (!STAFF_ROLES.includes(session.role as (typeof STAFF_ROLES)[number])) {
+  if (!(await canAccessWork(session, work))) {
     return { error: "Sem permissão." as const, status: 403 as const };
   }
 
