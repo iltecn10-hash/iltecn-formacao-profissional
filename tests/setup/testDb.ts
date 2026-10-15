@@ -115,6 +115,33 @@ export function createTestDb() {
       UNIQUE (school_id, code)
     );
 
+    CREATE TABLE council_evaluations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      school_id UUID NOT NULL REFERENCES schools(id),
+      class_id UUID NOT NULL REFERENCES classes(id),
+      subject_id UUID NOT NULL REFERENCES subjects(id),
+      period_id UUID NOT NULL REFERENCES evaluation_periods(id),
+      student_id UUID NOT NULL REFERENCES students(id),
+      teacher_id UUID NOT NULL REFERENCES teachers(id),
+      status VARCHAR(10) NOT NULL DEFAULT 'draft',
+      answers JSONB NOT NULL DEFAULT '{}',
+      version INTEGER NOT NULL DEFAULT 1,
+      finalized_at TIMESTAMPTZ,
+      finalized_by UUID,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (class_id, subject_id, period_id, student_id)
+    );
+
+    CREATE TABLE council_evaluation_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      evaluation_id UUID NOT NULL REFERENCES council_evaluations(id),
+      actor_id UUID,
+      action VARCHAR(12) NOT NULL,
+      details JSONB NOT NULL DEFAULT '{}',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
     CREATE TABLE enrollments (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       student_id UUID NOT NULL REFERENCES students(id),

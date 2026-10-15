@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import type { ScopeActor } from "@/modules/schools/scope";
 import { CouncilForbiddenError, CouncilInvalidError } from "./queries";
+import { EvaluationConflictError, EvaluationLockedError } from "./evaluations";
 
 /** Sessão da equipe (admin/professor/coordenador) ou a resposta de erro pronta. */
 export async function requireStaff(): Promise<{ actor: ScopeActor } | { error: NextResponse }> {
@@ -17,6 +18,10 @@ export function mapError(e: unknown): NextResponse {
     return NextResponse.json({ error: "Você não tem permissão para esta ação." }, { status: 403 });
   if (e instanceof CouncilInvalidError)
     return NextResponse.json({ error: e.message }, { status: 400 });
+  if (e instanceof EvaluationLockedError)
+    return NextResponse.json({ error: "Esta avaliação já foi finalizada. Peça à coordenação para reabri-la." }, { status: 409 });
+  if (e instanceof EvaluationConflictError)
+    return NextResponse.json({ error: "Esta avaliação foi alterada em outro lugar. Recarregue a página." }, { status: 409 });
   console.error("[conselho]", e instanceof Error ? e.message : "erro desconhecido");
   return NextResponse.json({ error: "Erro interno." }, { status: 500 });
 }
