@@ -54,6 +54,11 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["admin", "teacher", "coordinator"],
   },
   {
+    href: "/dashboard/conselho",
+    label: "Conselho de Classe",
+    roles: ["admin", "teacher", "coordinator"],
+  },
+  {
     href: "/dashboard/conquistas",
     label: "Conquistas",
     roles: ["student"],

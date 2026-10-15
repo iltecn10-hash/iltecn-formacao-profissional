@@ -966,6 +966,36 @@ conclusão de missão, administração), `games-results` (isolamento por escola/
 Limitação conhecida: a disputa real de duas respostas simultâneas é protegida por `WHERE version = N` e pelo
 índice único parcial, mas o pg-mem não reproduz concorrência real — não há teste de corrida de verdade.
 
+## Conselho de Classe — Etapas 1–3: cadastros base (2026-10-15, branch `feat/conselho-classe-base`)
+Migration `migrations/2026-10-15_conselho_base.sql` (aditiva, só CREATE; **NÃO aplicada em produção** até confirmação):
+`subjects` (por escola, `name_key` impede duplicata), `class_subject_teachers` (turma × disciplina × professor),
+`evaluation_periods` (bimestres por escola/ano), `council_criteria` (formulário configurável por escola).
+Nenhum dado é inserido pela migration: o código cria por escola, na 1ª necessidade, a lista padrão de disciplinas,
+os 4 bimestres do ano e os 9 critérios (`src/modules/council/defaults.ts`).
+- `src/modules/council/queries.ts`: `resolveSchoolId` (admin informa a escola; coordenador/professor só a própria),
+  `canManageSchool` (admin ou coordenador da escola). **Professor, coordenador e admin cadastram disciplinas**;
+  só gestão desativa disciplina, edita bimestres/critérios e vincula qualquer professor. Professor só se vincula
+  a si mesmo na turma pela qual é responsável. Vínculos listados com escopo no SQL (professor vê só os seus).
+- Rotas `/api/conselho/{disciplinas,periodos,criterios,vinculos}` (+ `/[id]`), aluno = 403.
+- Testes: `council-base` (integração) e `council-api-authorization`. 311 testes.
+
+### Etapas 4–8 — avaliações, telas, painel e relatórios (2026-10-15)
+Migration `migrations/2026-10-15_conselho_avaliacoes.sql` (aditiva): `council_evaluations` (única por turma+disciplina+bimestre+aluno;
+`answers` JSONB com o texto do critério/opção da época; `version`; `status` draft|final) e `council_evaluation_events` (auditoria).
+**Ordem de deploy: migration(ões) → deploy do código.**
+- `src/modules/council/evaluations.ts`: `getSheet`, `saveEvaluation`, `reopenEvaluation`, `listEvaluationEvents`, `getPanel`,
+  `getStudentCouncilReport`, `getClassReport`, `classReportToCsv`. Regras (todas no servidor): SÓ o professor do vínculo avalia (coordenação/admin
+  só consultam e reabrem); bimestre aberto; aluno com matrícula ativa na turma; finalizar exige critérios obrigatórios; final trava (HTTP 409);
+  concorrência por `version` (`UPDATE … WHERE version = N AND status = 'draft'`); reabrir = só coordenação da escola/admin, com motivo, bimestre aberto, auditado.
+- Relatórios só com avaliações FINAIS: individual (admin tudo · coordenador a escola · professor só o que ele avaliou) e consolidado da turma
+  (só coordenação), com CSV (anti-injeção de fórmula). Não geram nota oficial nem aprovação. Aluno nunca acessa (403/redirect).
+- Rotas `/api/conselho/{avaliacoes,avaliacoes/[id]/reabrir,avaliacoes/[id]/historico,painel,relatorios/aluno/[studentId],relatorios/turma}`.
+- Telas `/dashboard/conselho` (início), `/avaliar/[assignmentId]?period=`, `/configuracao`, `/painel`, `/relatorio`, `/relatorio/aluno/[id]`;
+  item "Conselho de Classe" na sidebar (admin/professor/coordenador). Impressão via `window.print()` (CSS global já esconde a sidebar).
+- Testes: `council-evaluations` (integração), `council-eval-api-authorization`. 343 testes no total.
+- Limitações honestas: sem edição de avaliação por coordenação; sem exportação em PDF própria (usa imprimir/salvar como PDF); sem política de retenção
+  de dados (LGPD) definida; a sidebar continua não responsiva (celular).
+
 ## Comandos
 
 ```bash
