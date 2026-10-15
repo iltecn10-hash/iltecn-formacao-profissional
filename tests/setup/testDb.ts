@@ -67,6 +67,54 @@ export function createTestDb() {
       active BOOLEAN NOT NULL DEFAULT true
     );
 
+    CREATE TABLE subjects (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      school_id UUID NOT NULL REFERENCES schools(id),
+      name VARCHAR(120) NOT NULL,
+      name_key VARCHAR(120) NOT NULL,
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_by UUID,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (school_id, name_key)
+    );
+
+    CREATE TABLE class_subject_teachers (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      class_id UUID NOT NULL REFERENCES classes(id),
+      subject_id UUID NOT NULL REFERENCES subjects(id),
+      teacher_id UUID NOT NULL REFERENCES teachers(id),
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (class_id, subject_id)
+    );
+
+    CREATE TABLE evaluation_periods (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      school_id UUID NOT NULL REFERENCES schools(id),
+      school_year INTEGER NOT NULL,
+      sort_order INTEGER NOT NULL,
+      name VARCHAR(80) NOT NULL,
+      starts_on DATE,
+      ends_on DATE,
+      status VARCHAR(10) NOT NULL DEFAULT 'open',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (school_id, school_year, sort_order)
+    );
+
+    CREATE TABLE council_criteria (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      school_id UUID NOT NULL REFERENCES schools(id),
+      code VARCHAR(60) NOT NULL,
+      label VARCHAR(200) NOT NULL,
+      kind VARCHAR(10) NOT NULL,
+      options JSONB NOT NULL DEFAULT '[]',
+      required BOOLEAN NOT NULL DEFAULT true,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (school_id, code)
+    );
+
     CREATE TABLE enrollments (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       student_id UUID NOT NULL REFERENCES students(id),

@@ -966,6 +966,20 @@ conclusão de missão, administração), `games-results` (isolamento por escola/
 Limitação conhecida: a disputa real de duas respostas simultâneas é protegida por `WHERE version = N` e pelo
 índice único parcial, mas o pg-mem não reproduz concorrência real — não há teste de corrida de verdade.
 
+## Conselho de Classe — Etapas 1–3: cadastros base (2026-10-15, branch `feat/conselho-classe-base`)
+Migration `migrations/2026-10-15_conselho_base.sql` (aditiva, só CREATE; **NÃO aplicada em produção** até confirmação):
+`subjects` (por escola, `name_key` impede duplicata), `class_subject_teachers` (turma × disciplina × professor),
+`evaluation_periods` (bimestres por escola/ano), `council_criteria` (formulário configurável por escola).
+Nenhum dado é inserido pela migration: o código cria por escola, na 1ª necessidade, a lista padrão de disciplinas,
+os 4 bimestres do ano e os 9 critérios (`src/modules/council/defaults.ts`).
+- `src/modules/council/queries.ts`: `resolveSchoolId` (admin informa a escola; coordenador/professor só a própria),
+  `canManageSchool` (admin ou coordenador da escola). **Professor, coordenador e admin cadastram disciplinas**;
+  só gestão desativa disciplina, edita bimestres/critérios e vincula qualquer professor. Professor só se vincula
+  a si mesmo na turma pela qual é responsável. Vínculos listados com escopo no SQL (professor vê só os seus).
+- Rotas `/api/conselho/{disciplinas,periodos,criterios,vinculos}` (+ `/[id]`), aluno = 403.
+- Testes: `council-base` (integração) e `council-api-authorization`. 311 testes.
+- Falta: avaliações (rascunho/final/auditoria), telas, painel da coordenação, relatórios.
+
 ## Comandos
 
 ```bash
