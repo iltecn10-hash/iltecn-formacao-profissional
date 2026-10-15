@@ -1,4 +1,6 @@
 import { query, queryOne } from "@/lib/db";
+import { studentScope } from "@/modules/students/access";
+import type { ScopeActor } from "@/modules/schools/scope";
 
 export interface StudentReportData {
   student: {
@@ -84,7 +86,9 @@ export interface StudentPerformanceRow {
   missions_completed: number;
 }
 
-export async function listStudentsPerformance(): Promise<StudentPerformanceRow[]> {
+export async function listStudentsPerformance(actor: ScopeActor): Promise<StudentPerformanceRow[]> {
+  const scope = studentScope(actor, "s.id", 1);
+  if (!scope) return [];
   return query<StudentPerformanceRow>(
     `SELECT s.id AS student_id, u.name, s.points, s.level,
             (SELECT c.name FROM enrollments e
@@ -95,29 +99,38 @@ export async function listStudentsPerformance(): Promise<StudentPerformanceRow[]
              WHERE ma.student_id = s.id AND ma.status = 'concluida')::int AS missions_completed
      FROM students s
      JOIN users u ON u.id = s.user_id
-     ORDER BY u.name ASC`
+     ${scope.where ? `WHERE ${scope.where}` : ""}
+     ORDER BY u.name ASC`,
+    scope.params
   );
 }
 
-export async function getModulePerformance(): Promise<
+/** Conclusão por módulo, só entre os alunos que o ator pode ver (mesmo escopo da lista de alunos). */
+export async function getModulePerformance(actor: ScopeActor): Promise<
   { module_name: string; track_name: string; completion_rate: number }[]
 > {
-  const totalStudents = await queryOne<{ count: string }>(`SELECT COUNT(*) FROM students`);
+  const scope = studentScope(actor, "s.id", 1);
+  if (!scope) return [];
+  const totalStudents = await queryOne<{ count: string }>(
+    `SELECT COUNT(*) FROM students s ${scope.where ? `WHERE ${scope.where}` : ""}`, scope.params);
   const students = Number(totalStudents?.count ?? 0);
   if (students === 0) return [];
+  // Parâmetro $1 = total de alunos (sempre > 0 aqui: retorna cedo se 0); o escopo reaproveita $2 para o id do ator.
+  const attemptScope = studentScope(actor, "ma.student_id", 2);
 
   return query<{ module_name: string; track_name: string; completion_rate: number }>(
     `SELECT m.name AS module_name, t.name AS track_name,
             ROUND(
               COUNT(DISTINCT ma.student_id) FILTER (WHERE ma.status = 'concluida')::numeric
-              / NULLIF($1, 0) * 100
+              / $1::numeric * 100
             ) AS completion_rate
      FROM modules m
      JOIN tracks t ON t.id = m.track_id
      LEFT JOIN missions mi ON mi.module_id = m.id
      LEFT JOIN mission_attempts ma ON ma.mission_id = mi.id
+       ${attemptScope?.where ? `AND ${attemptScope.where}` : ""}
      GROUP BY m.name, t.name, m.sort_order
      ORDER BY m.sort_order ASC`,
-    [students]
+    [students, ...(attemptScope?.params ?? [])]
   );
 }

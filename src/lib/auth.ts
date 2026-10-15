@@ -62,11 +62,26 @@ export async function clearSessionCookie() {
   cookieStore.delete(COOKIE_NAME);
 }
 
+/**
+ * Sessão válida = token assinado E usuário ainda ativo no banco. O papel (role) vem do banco, não do
+ * token: desativar um usuário ou mudar o papel dele vale na hora, sem esperar os 7 dias do cookie.
+ * Falha fechada: se o banco não responder, não há sessão.
+ */
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
-  return verifySessionToken(token);
+  const payload = await verifySessionToken(token);
+  if (!payload?.userId) return null;
+  try {
+    const { queryOne } = await import("@/lib/db"); // import tardio: auth.ts também é carregado fora do Node em testes
+    const user = await queryOne<{ active: boolean; role: SessionPayload["role"]; name: string; email: string }>(
+      `SELECT active, role, name, email FROM users WHERE id = $1::uuid`, [payload.userId]);
+    if (!user || !user.active) return null;
+    return { userId: payload.userId, email: user.email, name: user.name, role: user.role };
+  } catch {
+    return null;
+  }
 }
 
 export { COOKIE_NAME };

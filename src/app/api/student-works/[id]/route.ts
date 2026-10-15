@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
+import { canAccessWork } from "@/modules/student-works/access";
 import { getStudentIdByUserId } from "@/modules/students/queries";
 import {
   getStudentWorkById,
   saveStudentWorkContent,
   StudentWorkNotEditableError,
 } from "@/modules/student-works/queries";
-
-const STAFF_ROLES = ["admin", "teacher", "coordinator"] as const;
 
 export async function GET(
   _request: Request,
@@ -25,12 +24,7 @@ export async function GET(
     return NextResponse.json({ error: "Trabalho não encontrado." }, { status: 404 });
   }
 
-  if (session.role === "student") {
-    const ownStudentId = await getStudentIdByUserId(session.userId);
-    if (ownStudentId !== work.student_id) {
-      return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
-    }
-  } else if (!STAFF_ROLES.includes(session.role as (typeof STAFF_ROLES)[number])) {
+  if (!(await canAccessWork(session, work))) {
     return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
 

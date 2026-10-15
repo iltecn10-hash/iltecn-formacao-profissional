@@ -15,6 +15,15 @@ export function createTestDb() {
     impure: true, // cada chamada deve gerar um UUID novo, nunca ser cacheada/constant-folded
     implementation: () => randomUUID(),
   });
+  // ROUND(numeric) não existe no pg-mem (usado em relatórios).
+  for (const t of [DataType.float, DataType.decimal]) {
+    db.public.registerFunction({
+      name: "round",
+      args: [t],
+      returns: DataType.integer,
+      implementation: (x: number) => Math.round(Number(x)),
+    });
+  }
 
   db.public.none(`
     CREATE TABLE users (

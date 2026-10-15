@@ -39,8 +39,9 @@ export default async function TrabalhosAlunosPage({
 
   const { workId, status } = await searchParams;
 
-  const works = await listStudentWorksForStaff({ status });
-  const selected = workId ? await getStudentWorkById(workId) : null;
+  const works = await listStudentWorksForStaff({ userId: session.userId, role: session.role }, { status });
+  // Só abre trabalho que está na lista já filtrada por escopo — o id da URL não basta.
+  const selected = workId && works.some((w) => w.id === workId) ? await getStudentWorkById(workId) : null;
 
   return (
     <div>

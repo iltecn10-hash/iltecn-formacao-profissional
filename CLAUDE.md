@@ -849,8 +849,7 @@ Conquistar, guia **LIA** com mensagens prontas), `/dashboard/lab/certificado`,
   atividades (o editor não tem imagens/slides).
 - **Nenhum vídeo do LAB foi produzido** (infra reaproveitada; o admin anexa na tela Formação).
 - Sem QR code no certificado (só código + página de validação). Sem rate limit na validação pública.
-- Rotas antigas de relatório/trabalhos continuam com visibilidade ampla da equipe (lacuna anterior,
-  não alterada); as rotas NOVAS do LAB aplicam escopo por turma/escola.
+- Rotas antigas de relatório/trabalhos tinham visibilidade ampla da equipe — corrigido em 2026-10-15 (ver "Escopo de alunos para a equipe"); as rotas do LAB aplicam escopo por turma/escola.
 - Níveis infantis: 0/300/700/1200/1800/2500 XP; o XP do programa soma ~2.700 e só atinge "Mestre
   Digital" ao concluir o desafio final (garantido por teste).
 - Testes novos: `lab-content`, `lab-solver` (toda atividade é resolvível), `lab-rules`,
@@ -995,6 +994,17 @@ Migration `migrations/2026-10-15_conselho_avaliacoes.sql` (aditiva): `council_ev
 - Testes: `council-evaluations` (integração), `council-eval-api-authorization`. 343 testes no total.
 - Limitações honestas: sem edição de avaliação por coordenação; sem exportação em PDF própria (usa imprimir/salvar como PDF); sem política de retenção
   de dados (LGPD) definida; a sidebar continua não responsiva (celular).
+
+### Escopo de alunos para a equipe + sessão ativa (2026-10-15, sem migration)
+- `src/modules/students/access.ts`: `studentScope(actor, coluna, startAt)` (fragmento SQL) e `canActorViewStudent(actor, studentId)`.
+  Admin vê todos; coordenador os alunos da sua escola; professor os alunos com matrícula ATIVA em turmas pelas quais é responsável
+  ou onde tem vínculo ativo de disciplina; aluno e demais perfis nada.
+- Aplicado em: `/api/student-works/**` (GET/versions/evaluations/comments/evaluate, via `canAccessWork` em `modules/student-works/access.ts`),
+  `listStudentWorksForStaff`, `/api/reports/student/[id]`, `listStudentsPerformance`, `getModulePerformance`, e nas páginas
+  `/dashboard/relatorio` e `/dashboard/trabalhos-alunos` (o item selecionado precisa estar na lista do escopo). Fora do escopo = 403.
+- `getSession()` (`src/lib/auth.ts`) agora consulta `users` a cada chamada: usuário inexistente/desativado => sem sessão; **papel, nome e e-mail
+  vêm do banco**, não do JWT (rebaixar/desativar vale na hora). Falha do banco => sem sessão (falha fechada). Custo: 1 query por requisição autenticada.
+- Testes: `student-visibility` (integração), `staff-scope-authorization`, `session-active`. `tests/setup/testDb.ts` registra `round()` para o pg-mem.
 
 ## Comandos
 

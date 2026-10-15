@@ -49,6 +49,10 @@ vi.mock("@/modules/reports/queries", () => ({
   }),
 }));
 
+vi.mock("@/modules/students/access", () => ({
+  canActorViewStudent: vi.fn(async () => true),
+  studentScope: vi.fn(() => ({ where: "", params: [] })),
+}));
 vi.mock("@/modules/lab/guard", () => ({
   isKidsMission: vi.fn().mockResolvedValue(false),
 }));
@@ -304,7 +308,7 @@ describe("GET /api/reports/student/[id] — privacidade do relatório do aluno",
     expect(res.status).toBe(403);
   });
 
-  it("professor pode ver o relatório de qualquer aluno", async () => {
+  it("professor pode ver o relatório de aluno do seu escopo", async () => {
     mockGetSession.mockResolvedValue(session({ role: "teacher" }));
     const { GET } = await import("@/app/api/reports/student/[id]/route");
     const res = await GET(new Request("http://localhost/api/reports/student/qualquer-aluno"), {
