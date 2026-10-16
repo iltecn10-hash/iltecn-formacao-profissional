@@ -218,7 +218,7 @@ export function MissionCard({
           <button
             onClick={handleStart}
             disabled={loading}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60"
+            className="btn btn-primary"
           >
             Iniciar missão
           </button>

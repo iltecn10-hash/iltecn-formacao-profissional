@@ -30,7 +30,7 @@ export function ContextBar({ ctx, extra }: { ctx: PageContext; extra?: Record<st
           ))}
         </select>
       </label>
-      <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Ver</button>
+      <button className="btn btn-primary">Ver</button>
     </form>
   );
 }

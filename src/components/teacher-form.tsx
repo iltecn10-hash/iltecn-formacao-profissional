@@ -116,7 +116,7 @@ export function TeacherForm({ schools }: { schools: School[] }) {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60"
+          className="btn btn-primary"
         >
           {loading ? "Salvando…" : "Cadastrar professor"}
         </button>

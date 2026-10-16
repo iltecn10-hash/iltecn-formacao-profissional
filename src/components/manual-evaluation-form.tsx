@@ -95,7 +95,7 @@ export function ManualEvaluationForm({ workId }: { workId: string }) {
           type="button"
           onClick={() => handleSubmit(true)}
           disabled={sending}
-          className="rounded-md bg-primary px-3.5 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="btn btn-primary"
         >
           Aprovar
         </button>
@@ -103,7 +103,7 @@ export function ManualEvaluationForm({ workId }: { workId: string }) {
           type="button"
           onClick={() => handleSubmit(false)}
           disabled={sending}
-          className="rounded-md border border-border px-3.5 py-1.5 text-sm font-medium text-foreground disabled:opacity-50"
+          className="btn btn-secondary"
         >
           Devolver para revisão
         </button>

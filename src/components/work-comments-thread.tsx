@@ -85,7 +85,7 @@ export function WorkCommentsThread({
       {comments.length > 0 && (
         <div className="flex flex-col gap-2">
           {comments.map((c) => (
-            <div key={c.id} className="rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm">
+            <div key={c.id} className="btn btn-secondary">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium text-foreground">{c.author_name ?? "Usuário"}</span>
                 <span className="text-xs text-muted">{formatDateTime(c.created_at)}</span>

@@ -32,7 +32,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
             {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>
-        <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Gerar</button>
+        <button className="btn btn-primary">Gerar</button>
       </form>
       <ContextBar ctx={ctx} extra={selected ? { class: selected.id } : undefined} />
 
@@ -43,7 +43,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-heading text-lg font-semibold">{report.class_name} · {report.period.name} de {ctx.year}</h2>
             <div className="flex gap-2">
-              <a className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-background print:hidden"
+              <a className="btn btn-secondary print:hidden"
                 href={`/api/conselho/relatorios/turma?classId=${selected!.id}&periodId=${ctx.period.id}&format=csv`}>Baixar CSV</a>
               <PrintButton />
             </div>

@@ -169,7 +169,7 @@ export function VideoUpsertForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-primary px-3.5 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="btn btn-primary"
         >
           {loading ? "Salvando…" : existing ? "Salvar alterações" : "Adicionar vídeo"}
         </button>
@@ -187,7 +187,7 @@ export function VideoUpsertForm({
           type="button"
           onClick={onDone}
           disabled={loading}
-          className="rounded-md border border-border px-3.5 py-1.5 text-sm font-medium text-foreground disabled:opacity-50"
+          className="btn btn-secondary"
         >
           Cancelar
         </button>

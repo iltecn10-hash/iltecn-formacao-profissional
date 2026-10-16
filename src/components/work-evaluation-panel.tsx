@@ -22,7 +22,7 @@ export function EvaluationList({ evaluations }: { evaluations: WorkEvaluation[] 
       {evaluations.map((ev) => (
         <div
           key={ev.id}
-          className="rounded-md border border-border bg-surface px-3.5 py-3 text-sm"
+          className="btn btn-secondary"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-medium text-foreground">{TYPE_LABEL[ev.evaluation_type]}</span>
