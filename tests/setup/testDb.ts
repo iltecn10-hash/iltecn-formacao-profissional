@@ -146,6 +146,8 @@ export function createTestDb() {
       UNIQUE (school_id, name_key)
     );
 
+    ALTER TABLE assignments ADD COLUMN subject_id UUID;
+
     CREATE TABLE class_subject_teachers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       class_id UUID NOT NULL REFERENCES classes(id),

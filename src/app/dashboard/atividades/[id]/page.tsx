@@ -9,6 +9,7 @@ import {
   listSubmissions,
   type FileMeta,
 } from "@/modules/assignments/queries";
+import { listSubjects } from "@/modules/council/queries";
 import { RecordActions } from "@/components/record-actions";
 import { SubmitAssignmentForm } from "@/components/assignments/submit-form";
 import { MaterialsManager } from "@/components/assignments/materials-manager";
@@ -51,6 +52,7 @@ export default async function AtividadePage({ params }: { params: Promise<{ id: 
   if (!acc) notFound();
   const { assignment: a, level } = acc;
   const materials = await listMaterials(a.id);
+  const subjects = level === "manage" ? await listSubjects(a.school_id) : [];
 
   return (
     <div>
@@ -61,7 +63,7 @@ export default async function AtividadePage({ params }: { params: Promise<{ id: 
         <div>
           <h1 className="font-heading text-2xl font-bold text-foreground">{a.title}</h1>
           <p className="mt-1 text-muted">
-            {a.class_name} · Prazo: {formatDate(a.due_date)} · Nota máxima: {a.max_score}
+            {a.class_name}{a.subject_name ? ` · ${a.subject_name}` : ""} · Prazo: {formatDate(a.due_date)} · Nota máxima: {a.max_score}
             {a.closed ? " · Encerrada" : ""}
           </p>
         </div>
@@ -73,6 +75,16 @@ export default async function AtividadePage({ params }: { params: Promise<{ id: 
             fields={[
               { name: "title", label: "Título", value: a.title, required: true },
               { name: "instructions", label: "Instruções", value: a.instructions, type: "textarea" },
+              {
+                name: "subjectId",
+                label: "Disciplina",
+                value: a.subject_id ?? "",
+                type: "select",
+                options: [
+                  { value: "", label: "Sem disciplina específica" },
+                  ...subjects.map((x) => ({ value: x.id, label: x.name })),
+                ],
+              },
               { name: "dueDate", label: "Prazo", value: a.due_date, type: "date" },
             ]}
           />

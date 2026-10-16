@@ -7,6 +7,7 @@ import {
   listManageableClasses,
 } from "@/modules/assignments/queries";
 import { NewAssignmentPanel } from "@/components/assignments/new-assignment-panel";
+import { listSubjects } from "@/modules/council/queries";
 import { RecordActions } from "@/components/record-actions";
 
 const STATUS_LABEL = { submitted: "Entregue", returned: "Devolvida para refazer", evaluated: "Avaliada" } as const;
@@ -35,7 +36,8 @@ export default async function AtividadesPage() {
               <div>
                 <p className="font-medium text-foreground">{a.title}</p>
                 <p className="text-xs text-muted">
-                  {a.class_name} · Prazo: {formatDate(a.due_date)}
+                  {a.class_name}
+                  {a.subject_name ? ` · ${a.subject_name}` : ""} · Prazo: {formatDate(a.due_date)}
                   {a.closed ? " · Encerrada" : ""}
                 </p>
               </div>
@@ -54,6 +56,8 @@ export default async function AtividadesPage() {
 
   const [list, classes] = await Promise.all([listAssignmentsForStaff(actor), listManageableClasses(actor)]);
   const canCreate = session.role === "admin" || session.role === "teacher";
+  const schoolIds = [...new Set([...classes.map((c) => c.school_id), ...list.map((a) => a.school_id)])];
+  const subjects = (await Promise.all(schoolIds.map((id) => listSubjects(id)))).flat();
 
   return (
     <div>
@@ -62,7 +66,7 @@ export default async function AtividadesPage() {
         Cadastre atividades, deixe materiais para os alunos baixarem e veja o que cada um entregou.
       </p>
 
-      {canCreate && <NewAssignmentPanel classes={classes} startOpen={list.length === 0} />}
+      {canCreate && <NewAssignmentPanel classes={classes} subjects={subjects} startOpen={list.length === 0} />}
 
       <div className="mt-8 card overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -70,6 +74,7 @@ export default async function AtividadesPage() {
             <tr>
               <th className="px-5 py-3 font-medium text-muted">Atividade</th>
               <th className="px-5 py-3 font-medium text-muted">Turma</th>
+              <th className="px-5 py-3 font-medium text-muted">Disciplina</th>
               <th className="px-5 py-3 font-medium text-muted">Prazo</th>
               <th className="px-5 py-3 font-medium text-muted">Entregas</th>
               <th className="px-5 py-3 font-medium text-muted">Situação</th>
@@ -79,7 +84,7 @@ export default async function AtividadesPage() {
           <tbody>
             {list.length === 0 && (
               <tr>
-                <td colSpan={canCreate ? 6 : 5} className="px-5 py-8 text-center text-muted">
+                <td colSpan={canCreate ? 7 : 6} className="px-5 py-8 text-center text-muted">
                   Nenhuma atividade cadastrada ainda.
                 </td>
               </tr>
@@ -92,6 +97,7 @@ export default async function AtividadesPage() {
                   </Link>
                 </td>
                 <td className="px-5 py-3 text-muted">{a.class_name}</td>
+                <td className="px-5 py-3 text-muted">{a.subject_name ?? "—"}</td>
                 <td className="px-5 py-3 text-muted">{formatDate(a.due_date)}</td>
                 <td className="px-5 py-3 text-muted">
                   {a.delivered} de {a.total_students}
@@ -108,6 +114,16 @@ export default async function AtividadesPage() {
                       fields={[
                         { name: "title", label: "Título", value: a.title, required: true },
                         { name: "instructions", label: "Instruções", value: a.instructions, type: "textarea" },
+                        {
+                          name: "subjectId",
+                          label: "Disciplina",
+                          value: a.subject_id ?? "",
+                          type: "select",
+                          options: [
+                            { value: "", label: "Sem disciplina específica" },
+                            ...subjects.filter((x) => x.school_id === a.school_id).map((x) => ({ value: x.id, label: x.name })),
+                          ],
+                        },
                         { name: "dueDate", label: "Prazo", value: a.due_date, type: "date" },
                       ]}
                     />

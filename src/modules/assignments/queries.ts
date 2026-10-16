@@ -34,6 +34,8 @@ export interface AssignmentRow {
   school_id: string;
   class_id: string;
   class_name: string;
+  subject_id: string | null;
+  subject_name: string | null;
   title: string;
   instructions: string | null;
   due_date: string | null;
@@ -75,9 +77,10 @@ async function isEnrolled(studentId: string, classId: string): Promise<boolean> 
   return !!r;
 }
 
-const SELECT_ASSIGNMENT = `SELECT a.id, a.school_id, a.class_id, c.name AS class_name, a.title, a.instructions,
-       a.due_date, a.max_score::float AS max_score, a.closed, a.created_at
-  FROM assignments a JOIN classes c ON c.id = a.class_id`;
+const SELECT_ASSIGNMENT = `SELECT a.id, a.school_id, a.class_id, c.name AS class_name, a.subject_id, sj.name AS subject_name,
+       a.title, a.instructions, a.due_date, a.max_score::float AS max_score, a.closed, a.created_at
+  FROM assignments a JOIN classes c ON c.id = a.class_id
+  LEFT JOIN subjects sj ON sj.id = a.subject_id`;
 
 export type AccessLevel = "manage" | "view" | "student";
 
@@ -124,6 +127,18 @@ export interface AssignmentInput {
   instructions?: string | null;
   dueDate?: string | null;
   maxScore?: number;
+  subjectId?: string | null;
+}
+
+/** A disciplina (opcional) precisa ser ativa e da mesma escola da turma. */
+async function checkSubject(subjectId: string | null | undefined, schoolId: string) {
+  if (!subjectId) return;
+  const sj = await queryOne<{ school_id: string; active: boolean }>(
+    `SELECT school_id, active FROM subjects WHERE id = $1::uuid`,
+    [subjectId]
+  );
+  if (!sj || sj.school_id !== schoolId) throw new RecordError(400, "Disciplina inválida para esta turma.");
+  if (!sj.active) throw new RecordError(409, "Esta disciplina está desativada.");
 }
 
 export async function createAssignment(actor: ScopeActor, input: AssignmentInput, files: UploadedFile[]) {
@@ -134,10 +149,11 @@ export async function createAssignment(actor: ScopeActor, input: AssignmentInput
   if (!cls) throw new RecordError(400, "Turma inválida.");
   if (!(await canManageClass(actor, cls.id))) throw FORBIDDEN;
   if (!cls.active) throw new RecordError(409, "Esta turma está desativada.");
+  await checkSubject(input.subjectId, cls.school_id);
   const row = await queryOne<{ id: string }>(
-    `INSERT INTO assignments (school_id, class_id, created_by, title, instructions, due_date, max_score)
-     VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7) RETURNING id`,
-    [cls.school_id, cls.id, actor.userId, input.title, input.instructions ?? null, input.dueDate ?? null, input.maxScore ?? 10]
+    `INSERT INTO assignments (school_id, class_id, created_by, title, instructions, due_date, max_score, subject_id)
+     VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7, $8) RETURNING id`,
+    [cls.school_id, cls.id, actor.userId, input.title, input.instructions ?? null, input.dueDate ?? null, input.maxScore ?? 10, input.subjectId || null]
   );
   if (!row) throw new Error("Falha ao criar a atividade.");
   await insertFiles(row.id, null, "material", actor.userId, files);
@@ -147,14 +163,20 @@ export async function createAssignment(actor: ScopeActor, input: AssignmentInput
 export async function updateAssignment(
   actor: ScopeActor,
   id: string,
-  input: { title: string; instructions?: string | null; dueDate?: string | null }
+  input: { title: string; instructions?: string | null; dueDate?: string | null; subjectId?: string | null }
 ) {
   const acc = await getAssignmentAccess(actor, id);
   if (!acc) throw NOT_FOUND;
   if (acc.level !== "manage") throw FORBIDDEN;
+  // subjectId ausente = mantém; "" / null = sem disciplina.
+  const changeSubject = input.subjectId !== undefined;
+  const newSubject = input.subjectId || null;
+  if (changeSubject && newSubject !== acc.assignment.subject_id) await checkSubject(newSubject, acc.assignment.school_id);
   await query(
-    `UPDATE assignments SET title = $2, instructions = $3, due_date = $4, updated_at = now() WHERE id = $1::uuid`,
-    [id, input.title, input.instructions ?? null, input.dueDate ?? null]
+    `UPDATE assignments SET title = $2, instructions = $3, due_date = $4,
+            subject_id = CASE WHEN $5::boolean THEN $6::uuid ELSE subject_id END, updated_at = now()
+      WHERE id = $1::uuid`,
+    [id, input.title, input.instructions ?? null, input.dueDate ?? null, changeSubject, newSubject]
   );
 }
 
@@ -256,11 +278,13 @@ export async function listAssignmentsForStudent(userId: string): Promise<Student
   const sid = await studentIdOf(userId);
   if (!sid) return [];
   const rows = await query<StudentAssignmentRow>(
-    `SELECT a.id, a.school_id, a.class_id, c.name AS class_name, a.title, a.instructions,
+    `SELECT a.id, a.school_id, a.class_id, c.name AS class_name, a.subject_id, sj.name AS subject_name,
+            a.title, a.instructions,
             a.due_date, a.max_score::float AS max_score, a.closed, a.created_at,
             s.status AS submission_status, s.score::float AS score
        FROM assignments a
        JOIN classes c ON c.id = a.class_id
+       LEFT JOIN subjects sj ON sj.id = a.subject_id
        JOIN enrollments e ON e.class_id = a.class_id AND e.student_id = $1::uuid AND e.status = 'active'
        LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.student_id = $1::uuid
       ORDER BY a.created_at DESC`,
@@ -437,13 +461,15 @@ export async function getFileForDownload(actor: ScopeActor, fileId: string): Pro
 }
 
 /** Turmas ativas em que o ator pode criar atividades (admin: todas; professor: as suas). */
-export async function listManageableClasses(actor: ScopeActor): Promise<{ id: string; name: string }[]> {
+export async function listManageableClasses(actor: ScopeActor): Promise<{ id: string; name: string; school_id: string }[]> {
   if (actor.role === "admin") {
-    return query<{ id: string; name: string }>(`SELECT id, name FROM classes WHERE active = true ORDER BY name ASC`);
+    return query<{ id: string; name: string; school_id: string }>(
+      `SELECT id, name, school_id FROM classes WHERE active = true ORDER BY name ASC`
+    );
   }
   if (actor.role !== "teacher") return [];
-  return query<{ id: string; name: string }>(
-    `SELECT id, name FROM classes
+  return query<{ id: string; name: string; school_id: string }>(
+    `SELECT id, name, school_id FROM classes
       WHERE active = true AND (
         teacher_id IN (SELECT id FROM teachers WHERE user_id = $1::uuid)
         OR id IN (SELECT class_id FROM class_subject_teachers WHERE active = true
