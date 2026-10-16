@@ -1044,6 +1044,23 @@ exibido (`AppShell` recebe `roleLabel`). Só o **admin** cadastra/edita/desativa
 tela `/dashboard/coordenacao` ("Coordenação e direção", menu Cadastros, admin). Senha provisória segue `validateNewPassword("coordinator", …)`.
 **Ordem de deploy: migration → deploy do código** (o layout consulta `coordinators.position`). Testes: `coordination`, `coordination-authorization`. 425 testes.
 
+## Atividades da turma (2026-10-16, branch `feat/atividades-turma`)
+Migration `migrations/2026-10-16_atividades_turma.sql` (aditiva, aplicada em produção em 2026-10-16): `assignments` (turma, título, instruções, prazo `due_date`, nota máxima, `closed`),
+`assignment_submissions` (uma por aluno+atividade; `submitted|returned|evaluated`, nota, comentário), `assignment_files` (`kind` material|delivery, **conteúdo em BYTEA no Postgres** — o projeto
+não tem armazenamento de objetos). Limites no servidor (`src/lib/uploads.ts`): até 3 arquivos e 4 MB por envio (a Vercel recusa corpo acima de ~4,5 MB), extensões permitidas fixas
+(pdf/office/odf/txt/csv/imagem/zip; nada de html/svg/js/exe), tipo definido pela extensão, download sempre `attachment` + `nosniff`. Nunca selecionar `data` em listagens.
+- `src/modules/assignments/queries.ts`: criar/editar/avaliar = admin ou professor da turma (responsável ou vínculo de disciplina ativo); coordenador só consulta a escola; aluno só vê atividades das turmas
+  com matrícula ativa e só a própria entrega. Reenviar substitui os arquivos; avaliada trava o reenvio; "devolver" reabre; atividade encerrada não recebe entrega. Excluir com entrega só ENCERRA.
+- Rotas: `GET|POST /api/assignments` (multipart no POST), `PATCH|DELETE /api/assignments/[id]` (`{active}` = abrir/encerrar), `POST /api/assignments/[id]/submit` (aluno),
+  `POST /api/assignments/submissions/[sid]/evaluate`, `GET /api/assignments/files/[fileId]`. Telas: `/dashboard/atividades` e `/dashboard/atividades/[id]`; menu "Atividades" (todos, exceto o menu infantil).
+**Ordem de deploy: migration → deploy do código.** Testes: `assignments` (integração), `assignments-authorization`, `uploads`. Limitação: sem varredura de vírus e sem edição dos materiais depois de criada a atividade.
+
+## Backups antes de publicar (regra do usuário, 2026-10-16)
+**Sempre** criar um ponto de restauração ANTES de publicar: (1) branch no GitHub `backup/antes-<mudança>-AAAA-MM-DD` apontando para o `main` atual
+(`git push origin <sha>:refs/heads/backup/...`; o envio de *tags* é recusado pelo proxy do sandbox); (2) snapshot do Neon (`create_snapshot` na branch `br-fancy-morning-axjthn7q`).
+Para voltar o site: no Vercel, "Promote" do deploy anterior. Para voltar o banco: `restore_snapshot`. Pontos existentes: `backup/antes-novo-design-2026-10-15`,
+`backup/antes-atividades-2026-10-16` + snapshot `backup-antes-atividades-2026-10-16` (`snap-weathered-dust-axomg328`).
+
 ## Comandos
 
 ```bash
