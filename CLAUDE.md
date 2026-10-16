@@ -1053,13 +1053,14 @@ não tem armazenamento de objetos). Limites no servidor (`src/lib/uploads.ts`): 
   com matrícula ativa e só a própria entrega. Reenviar substitui os arquivos; avaliada trava o reenvio; "devolver" reabre; atividade encerrada não recebe entrega. Excluir com entrega só ENCERRA.
 - Rotas: `GET|POST /api/assignments` (multipart no POST), `PATCH|DELETE /api/assignments/[id]` (`{active}` = abrir/encerrar), `POST /api/assignments/[id]/submit` (aluno),
   `POST /api/assignments/submissions/[sid]/evaluate`, `GET /api/assignments/files/[fileId]`. Telas: `/dashboard/atividades` e `/dashboard/atividades/[id]`; menu "Atividades" (todos, exceto o menu infantil).
+- Ficha do aluno: `/dashboard/students/[id]/arquivos` (link "Ver arquivos" na tela Alunos; escopo `canActorViewStudent` + só entregas de atividades que o ator acessa — `listDeliveriesForStudent`).
 **Ordem de deploy: migration → deploy do código.** Testes: `assignments` (integração), `assignments-authorization`, `uploads`. Limitação: sem varredura de vírus e sem edição dos materiais depois de criada a atividade.
 
 ## Backups antes de publicar (regra do usuário, 2026-10-16)
 **Sempre** criar um ponto de restauração ANTES de publicar: (1) branch no GitHub `backup/antes-<mudança>-AAAA-MM-DD` apontando para o `main` atual
 (`git push origin <sha>:refs/heads/backup/...`; o envio de *tags* é recusado pelo proxy do sandbox); (2) snapshot do Neon (`create_snapshot` na branch `br-fancy-morning-axjthn7q`).
 Para voltar o site: no Vercel, "Promote" do deploy anterior. Para voltar o banco: `restore_snapshot`. Pontos existentes: `backup/antes-novo-design-2026-10-15`,
-`backup/antes-atividades-2026-10-16` + snapshot `backup-antes-atividades-2026-10-16` (`snap-weathered-dust-axomg328`).
+`backup/antes-atividades-2026-10-16` + snapshot `backup-antes-atividades-2026-10-16` (`snap-weathered-dust-axomg328`), `backup/antes-arquivos-aluno-2026-10-16` + branch Neon `backup-antes-arquivos-aluno-2026-10-16` (`br-snowy-lab-axjy99v6`). **O limite de snapshots do Neon foi atingido** (HTTP 422): usar `create_branch` como backup do banco, ou pedir ao usuário para apagar snapshots antigos.
 
 ## Comandos
 

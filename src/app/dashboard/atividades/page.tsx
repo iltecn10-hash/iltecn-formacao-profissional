@@ -26,7 +26,7 @@ export default async function AtividadesPage() {
     return (
       <div>
         <h1 className="font-heading text-2xl font-bold text-foreground">Atividades</h1>
-        <p className="mt-1 text-muted">Atividades enviadas pelos seus professores. Baixe os materiais e entregue seus arquivos.</p>
+        <p className="mt-1 text-muted">Atividades enviadas pelos seus professores. Clique em uma atividade para baixar os materiais e anexar o seu arquivo.</p>
         <div className="mt-6 flex flex-col gap-3">
           {list.length === 0 && <p className="card p-5 text-sm text-muted">Nenhuma atividade por enquanto.</p>}
           {list.map((a) => (
@@ -43,6 +43,7 @@ export default async function AtividadesPage() {
                   ? STATUS_LABEL[a.submission_status] + (a.score != null ? ` · ${a.score}` : "")
                   : "Falta entregar"}
               </span>
+              <span className="text-sm font-medium text-primary">{a.submission_status ? "Abrir" : "Abrir e anexar arquivo →"}</span>
             </Link>
           ))}
         </div>

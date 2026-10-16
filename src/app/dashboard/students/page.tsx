@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { listStudents } from "@/modules/students/queries";
@@ -46,6 +47,7 @@ export default async function StudentsPage() {
               <th className="px-5 py-3 font-medium text-muted">Nível</th>
               <th className="px-5 py-3 font-medium text-muted">Pontos</th>
               <th className="px-5 py-3 font-medium text-muted">Situação</th>
+              <th className="px-5 py-3 font-medium text-muted">Arquivos</th>
               <th className="px-5 py-3 font-medium text-muted">Acesso</th>
               <th className="px-5 py-3 font-medium text-muted">Cadastro</th>
             </tr>
@@ -53,7 +55,7 @@ export default async function StudentsPage() {
           <tbody>
             {students.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-8 text-center text-muted">
+                <td colSpan={8} className="px-5 py-8 text-center text-muted">
                   Nenhum aluno cadastrado ainda.
                 </td>
               </tr>
@@ -68,6 +70,11 @@ export default async function StudentsPage() {
                   <span className={`badge ${s.active === false ? "badge-danger" : "badge-success"}`}>
                     {s.active === false ? "Desativado" : "Ativo"}
                   </span>
+                </td>
+                <td className="px-5 py-3">
+                  <Link href={`/dashboard/students/${s.id}/arquivos`} className="text-sm font-medium text-primary underline underline-offset-2">
+                    Ver arquivos
+                  </Link>
                 </td>
                 <td className="px-5 py-3">
                   <ResetPasswordButton studentId={s.id} studentName={s.name ?? s.email ?? "aluno"} />

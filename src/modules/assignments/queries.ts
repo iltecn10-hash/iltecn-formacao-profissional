@@ -426,3 +426,47 @@ export async function listManageableClasses(actor: ScopeActor): Promise<{ id: st
     [actor.userId]
   );
 }
+
+export interface StudentDelivery {
+  submission_id: string;
+  assignment_id: string;
+  assignment_title: string;
+  class_name: string;
+  status: "submitted" | "returned" | "evaluated";
+  score: number | null;
+  feedback: string | null;
+  submitted_at: string;
+  late: boolean;
+  files: FileMeta[];
+}
+
+/**
+ * Tudo o que um aluno entregou, para a ficha dele. Quem consulta só enxerga as entregas das
+ * atividades que PODE acessar (professor: as das suas turmas; coordenador: as da escola; admin: todas).
+ */
+export async function listDeliveriesForStudent(actor: ScopeActor, studentId: string): Promise<StudentDelivery[]> {
+  const subs = await query<{ id: string; assignment_id: string }>(
+    `SELECT id, assignment_id FROM assignment_submissions WHERE student_id = $1::uuid ORDER BY submitted_at DESC`,
+    [studentId]
+  );
+  const out: StudentDelivery[] = [];
+  for (const s of subs) {
+    const acc = await getAssignmentAccess(actor, s.assignment_id);
+    if (!acc || acc.level === "student") continue;
+    const [one] = await listSubmissions(acc.assignment, studentId);
+    if (!one) continue;
+    out.push({
+      submission_id: one.id,
+      assignment_id: acc.assignment.id,
+      assignment_title: acc.assignment.title,
+      class_name: acc.assignment.class_name,
+      status: one.status,
+      score: one.score,
+      feedback: one.feedback,
+      submitted_at: one.submitted_at,
+      late: one.late,
+      files: one.files,
+    });
+  }
+  return out;
+}

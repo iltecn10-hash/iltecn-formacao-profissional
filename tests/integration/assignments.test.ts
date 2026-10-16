@@ -128,3 +128,29 @@ describe("atividades da turma", () => {
     expect(await A.getFileForDownload(as("coordB", "coordinator"), del)).toBeNull();
   });
 });
+
+describe("arquivos na ficha do aluno", () => {
+  it("lista só as entregas que o ator pode ver", async () => {
+    testDb = createTestDb();
+    const hash = bcrypt.hashSync("x", 4);
+    const u = async (k: string, role: string) => (await mk("users", "email, password_hash, name, role", [`${k}@y.com`, hash, k, role]));
+    const tA = await u("tA", "teacher"); const tB = await u("tB", "teacher"); const st = await u("st", "student"); const co = await u("co", "coordinator");
+    const school = await mk("schools", "name", ["S"]);
+    const school2 = await mk("schools", "name", ["S2"]);
+    await mk("coordinators", "user_id, school_id", [co, school2]);
+    const teachA = await mk("teachers", "user_id, school_id", [tA, school]);
+    const teachB = await mk("teachers", "user_id, school_id", [tB, school]);
+    const cls = await mk("classes", "school_id, teacher_id, name", [school, teachA, "C1"]);
+    const cls2 = await mk("classes", "school_id, teacher_id, name", [school, teachB, "C2"]);
+    const sid = await mk("students", "user_id, school_id", [st, school]);
+    await mk("enrollments", "student_id, class_id", [sid, cls]);
+    await mk("enrollments", "student_id, class_id", [sid, cls2]);
+    const a1 = (await A.createAssignment({ userId: tA, role: "teacher" }, { classId: cls, title: "Da A" }, [])).id;
+    const a2 = (await A.createAssignment({ userId: tB, role: "teacher" }, { classId: cls2, title: "Da B" }, [])).id;
+    await A.submitAssignment({ userId: st, role: "student" }, a1, null, [file("a.txt")]);
+    await A.submitAssignment({ userId: st, role: "student" }, a2, null, [file("b.txt")]);
+    expect((await A.listDeliveriesForStudent({ userId: tA, role: "teacher" }, sid)).map((d) => d.assignment_title)).toEqual(["Da A"]);
+    expect(await A.listDeliveriesForStudent({ userId: "00000000-0000-4000-8000-000000000000", role: "admin" }, sid)).toHaveLength(2);
+    expect(await A.listDeliveriesForStudent({ userId: co, role: "coordinator" }, sid)).toHaveLength(0);
+  });
+});
