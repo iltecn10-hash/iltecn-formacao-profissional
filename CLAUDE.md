@@ -1054,7 +1054,7 @@ não tem armazenamento de objetos). Limites no servidor (`src/lib/uploads.ts`): 
 - Rotas: `GET|POST /api/assignments` (multipart no POST), `PATCH|DELETE /api/assignments/[id]` (`{active}` = abrir/encerrar), `POST /api/assignments/[id]/submit` (aluno),
   `POST /api/assignments/submissions/[sid]/evaluate`, `GET /api/assignments/files/[fileId]`. Telas: `/dashboard/atividades` e `/dashboard/atividades/[id]`; menu "Atividades" (todos, exceto o menu infantil).
 - Ficha do aluno: `/dashboard/students/[id]/arquivos` (link "Ver arquivos" na tela Alunos; escopo `canActorViewStudent` + só entregas de atividades que o ator acessa — `listDeliveriesForStudent`).
-**Ordem de deploy: migration → deploy do código.** Testes: `assignments` (integração), `assignments-authorization`, `uploads`. Limitação: sem varredura de vírus e sem edição dos materiais depois de criada a atividade.
+**Ordem de deploy: migration → deploy do código.** Testes: `assignments` (integração), `assignments-authorization`, `uploads`. Materiais podem ser acrescentados/removidos depois (`POST /api/assignments/[id]/materials`, `DELETE …/materials/[fileId]`; até 10 por atividade; `MaterialsManager` na tela da atividade). Seletor de arquivos = `FilePicker` (botão visível). Limitação: sem varredura de vírus.
 
 ## Backups antes de publicar (regra do usuário, 2026-10-16)
 **Sempre** criar um ponto de restauração ANTES de publicar: (1) branch no GitHub `backup/antes-<mudança>-AAAA-MM-DD` apontando para o `main` atual

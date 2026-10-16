@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { FilePicker } from "./file-picker";
 
 export function SubmitAssignmentForm({ assignmentId, hasPrevious }: { assignmentId: string; hasPrevious: boolean }) {
   const router = useRouter();
@@ -25,7 +26,7 @@ export function SubmitAssignmentForm({ assignmentId, hasPrevious }: { assignment
       return;
     }
     setFiles([]);
-    (e.target as HTMLFormElement).reset();
+    setComment("");
     router.refresh();
   }
 
@@ -35,12 +36,7 @@ export function SubmitAssignmentForm({ assignmentId, hasPrevious }: { assignment
         <label className="mb-1.5 block text-sm font-medium text-foreground">
           {hasPrevious ? "Enviar de novo (substitui os arquivos anteriores)" : "Seus arquivos"}
         </label>
-        <input
-          type="file"
-          multiple
-          onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-          className="block w-full text-sm text-muted"
-        />
+        <FilePicker files={files} onChange={setFiles} label="Anexar meu trabalho pronto" />
         <p className="mt-1 text-xs text-muted">Até 3 arquivos, 4 MB no total.</p>
       </div>
       <div>

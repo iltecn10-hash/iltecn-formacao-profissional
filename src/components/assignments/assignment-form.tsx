@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { FilePicker } from "./file-picker";
 
 export function AssignmentForm({ classes }: { classes: { id: string; name: string }[] }) {
   const router = useRouter();
@@ -38,7 +39,6 @@ export function AssignmentForm({ classes }: { classes: { id: string; name: strin
     setInstructions("");
     setDueDate("");
     setFiles([]);
-    (e.target as HTMLFormElement).reset();
     router.refresh();
   }
 
@@ -70,12 +70,7 @@ export function AssignmentForm({ classes }: { classes: { id: string; name: strin
         <label className="mb-1.5 block text-sm font-medium text-foreground">
           Materiais para os alunos baixarem (opcional)
         </label>
-        <input
-          type="file"
-          multiple
-          onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-          className="block w-full text-sm text-muted"
-        />
+        <FilePicker files={files} onChange={setFiles} />
         <p className="mt-1 text-xs text-muted">
           Até 3 arquivos, 4 MB no total. Aceitos: PDF, Word, Excel, PowerPoint, texto, imagem e ZIP.
         </p>
