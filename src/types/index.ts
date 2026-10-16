@@ -28,6 +28,7 @@ export interface Teacher {
   bio: string | null;
   name?: string;
   email?: string;
+  active?: boolean;
 }
 
 /**
@@ -50,6 +51,7 @@ export interface Student {
   points: number;
   name?: string;
   email?: string;
+  active?: boolean;
 }
 
 export interface Coordinator {

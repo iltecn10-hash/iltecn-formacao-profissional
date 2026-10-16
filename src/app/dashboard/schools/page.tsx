@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { listSchools } from "@/modules/schools/queries";
 import { SchoolForm } from "@/components/school-form";
+import { RecordActions } from "@/components/record-actions";
 
 export default async function SchoolsPage() {
   const session = await getSession();
@@ -39,12 +40,13 @@ export default async function SchoolsPage() {
               <th className="px-5 py-3 font-medium text-muted">Código</th>
               <th className="px-5 py-3 font-medium text-muted">Cidade</th>
               <th className="px-5 py-3 font-medium text-muted">Status</th>
+              {session.role === "admin" && <th className="px-5 py-3 font-medium text-muted">Ações</th>}
             </tr>
           </thead>
           <tbody>
             {schools.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-8 text-center text-muted">
+                <td colSpan={5} className="px-5 py-8 text-center text-muted">
                   Nenhuma escola cadastrada ainda.
                 </td>
               </tr>
@@ -67,6 +69,22 @@ export default async function SchoolsPage() {
                     {school.active ? "Ativa" : "Inativa"}
                   </span>
                 </td>
+                {session.role === "admin" && (
+                  <td className="px-5 py-3">
+                    <RecordActions
+                      endpoint={`/api/schools/${school.id}`}
+                      label={school.name}
+                      active={school.active}
+                      fields={[
+                        { name: "name", label: "Nome da escola", value: school.name, required: true },
+                        { name: "code", label: "Código", value: school.code },
+                        { name: "address", label: "Endereço", value: school.address },
+                        { name: "city", label: "Cidade", value: school.city },
+                        { name: "state", label: "Estado (UF)", value: school.state },
+                      ]}
+                    />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

@@ -12,7 +12,7 @@ export async function listStudents(actor: ScopeActor): Promise<Student[]> {
   if (!scope) return [];
   return query<Student>(
     `SELECT s.id, s.user_id, s.school_id, s.birth_date, s.guardian_name,
-            s.guardian_contact, s.level, s.points, u.name, u.email
+            s.guardian_contact, s.level, s.points, u.name, u.email, u.active
      FROM students s
      JOIN users u ON u.id = s.user_id
      ${scope.where ? `WHERE ${scope.where}` : ""}

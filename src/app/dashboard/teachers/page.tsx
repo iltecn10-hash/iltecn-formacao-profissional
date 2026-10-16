@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { listTeachers } from "@/modules/teachers/queries";
 import { listSchools } from "@/modules/schools/queries";
 import { TeacherForm } from "@/components/teacher-form";
+import { RecordActions } from "@/components/record-actions";
 
 export default async function TeachersPage() {
   const session = await getSession();
@@ -34,12 +35,14 @@ export default async function TeachersPage() {
             <tr>
               <th className="px-5 py-3 font-medium text-muted">Nome</th>
               <th className="px-5 py-3 font-medium text-muted">E-mail</th>
+              <th className="px-5 py-3 font-medium text-muted">Situação</th>
+              <th className="px-5 py-3 font-medium text-muted">Ações</th>
             </tr>
           </thead>
           <tbody>
             {teachers.length === 0 && (
               <tr>
-                <td colSpan={2} className="px-5 py-8 text-center text-muted">
+                <td colSpan={4} className="px-5 py-8 text-center text-muted">
                   Nenhum professor cadastrado ainda.
                 </td>
               </tr>
@@ -48,6 +51,23 @@ export default async function TeachersPage() {
               <tr key={t.id} className="border-b border-border last:border-0">
                 <td className="px-5 py-3 font-medium text-foreground">{t.name}</td>
                 <td className="px-5 py-3 text-muted">{t.email}</td>
+                <td className="px-5 py-3">
+                  <span className={`badge ${t.active === false ? "badge-danger" : "badge-success"}`}>
+                    {t.active === false ? "Desativado" : "Ativo"}
+                  </span>
+                </td>
+                <td className="px-5 py-3">
+                  <RecordActions
+                    endpoint={`/api/teachers/${t.id}`}
+                    label={t.name ?? t.email ?? "professor"}
+                    active={t.active !== false}
+                    fields={[
+                      { name: "name", label: "Nome", value: t.name, required: true },
+                      { name: "email", label: "E-mail (login)", value: t.email, type: "email", required: true },
+                      { name: "bio", label: "Apresentação", value: t.bio, type: "textarea" },
+                    ]}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

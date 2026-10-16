@@ -1024,6 +1024,18 @@ Migration `migrations/2026-10-15_conselho_avaliacoes.sql` (aditiva): `council_ev
 - Não há "esqueci minha senha" por e-mail (o projeto não tem serviço de envio): a recuperação é feita pela hierarquia (professor → coordenação → admin). A senha atual nunca é visível (só hash bcrypt). O 1º admin vem de `npm run seed` (padrão do script no repositório: troque a senha após o primeiro acesso).
 - Testes: `password-policy`, `users-authorization`, `users-passwords`. 382 testes (os de rotas do Conselho/Jogos/LAB precisam de `DATABASE_URL` fictícia no ambiente).
 
+## Editar e excluir cadastros — Etapa 1: escolas, professores, alunos, turmas (2026-10-16, sem migration, branch `feat/editar-excluir-etapa1`)
+- `src/modules/registry/records.ts`: `update*`, `set*Active` (reativar/desativar) e `delete*` para Escola/Professor/Aluno/Turma. **Excluir é inteligente**: sem nenhum
+  histórico ligado (matrículas, notas, trabalhos, avaliações do Conselho, vendas, mensagens…) apaga de vez; com histórico só DESATIVA (`users.active`/`schools.active`/
+  `classes.active`) e dá para reativar. O servidor decide (nunca a tela). Desativar professor/aluno bloqueia o login na hora (`getSession` confere `users.active`).
+- Quem pode: escola e professor = só admin; aluno = editar (admin, coordenador da escola, professor da escola), excluir/reativar (admin, coordenador da escola);
+  turma = editar (admin, coordenador da escola, professor da PRÓPRIA turma, sem repassá-la), excluir/reativar (admin, coordenador da escola). Fora do escopo = 403, inexistente = 404,
+  e-mail repetido = 409. Erros de regra via `RecordError` (`src/lib/record-route.ts` converte em HTTP).
+- Rotas `PATCH|DELETE /api/{schools,teachers,students,classes}/[id]` (PATCH `{active:boolean}` reativa/desativa; PATCH com os campos edita).
+- UI: `src/components/record-actions.tsx` (genérico: Editar em janela, Excluir com aviso, Reativar) — é o componente a reutilizar nas etapas 2 (trilhas/módulos/missões)
+  e 3 (supermercado). Listas de professores/alunos passaram a trazer `active`.
+- Testes: `registry-records` (integração, escopo e apagar-ou-desativar) e `registry-authorization` (rotas). `tests/setup/testDb.ts` ganhou colunas de escolas/updated_at e `internal_messages`. 414 testes.
+
 ## Comandos
 
 ```bash

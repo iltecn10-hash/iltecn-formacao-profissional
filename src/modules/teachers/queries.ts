@@ -11,7 +11,7 @@ export async function listTeachers(actor: ScopeActor): Promise<Teacher[]> {
   const scope = schoolScope(actor, "t.school_id");
   if (!scope) return [];
   return query<Teacher>(
-    `SELECT t.id, t.user_id, t.school_id, t.bio, u.name, u.email
+    `SELECT t.id, t.user_id, t.school_id, t.bio, u.name, u.email, u.active
      FROM teachers t
      JOIN users u ON u.id = t.user_id
      ${scope.where ? `WHERE ${scope.where}` : ""}
