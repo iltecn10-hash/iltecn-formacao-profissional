@@ -4,7 +4,13 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FilePicker } from "./file-picker";
 
-export function AssignmentForm({ classes }: { classes: { id: string; name: string }[] }) {
+export function AssignmentForm({
+  classes,
+  onCreated,
+}: {
+  classes: { id: string; name: string }[];
+  onCreated?: () => void;
+}) {
   const router = useRouter();
   const [classId, setClassId] = useState(classes[0]?.id ?? "");
   const [title, setTitle] = useState("");
@@ -40,6 +46,7 @@ export function AssignmentForm({ classes }: { classes: { id: string; name: strin
     setDueDate("");
     setFiles([]);
     router.refresh();
+    onCreated?.();
   }
 
   return (
