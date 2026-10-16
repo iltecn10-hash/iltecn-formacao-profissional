@@ -3,8 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+const inputClass = "field";
 
 export function SchoolForm() {
   const router = useRouter();
@@ -93,7 +92,7 @@ export function SchoolForm() {
       </div>
 
       {error && (
-        <p className="sm:col-span-2 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+        <p className="sm:col-span-2 rounded-md bg-danger-light px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}
@@ -102,7 +101,7 @@ export function SchoolForm() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60"
+          className="btn btn-primary"
         >
           {loading ? "Salvando…" : "Cadastrar escola"}
         </button>

@@ -4,8 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { VideoProvider, VideoType } from "@/types";
 
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+const inputClass = "field";
 
 const VIDEO_TYPE_OPTIONS: { value: VideoType; label: string }[] = [
   { value: "EXPLICATIVO", label: "Explicativo" },
@@ -170,7 +169,7 @@ export function VideoUpsertForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-primary px-3.5 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="btn btn-primary"
         >
           {loading ? "Salvando…" : existing ? "Salvar alterações" : "Adicionar vídeo"}
         </button>
@@ -188,7 +187,7 @@ export function VideoUpsertForm({
           type="button"
           onClick={onDone}
           disabled={loading}
-          className="rounded-md border border-border px-3.5 py-1.5 text-sm font-medium text-foreground disabled:opacity-50"
+          className="btn btn-secondary"
         >
           Cancelar
         </button>

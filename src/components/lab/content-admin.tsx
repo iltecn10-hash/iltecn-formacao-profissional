@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ACTIVITY_CATEGORIES, ACTIVITY_KINDS, LAB_SKILLS } from "@/lib/lab/activities";
 import type { AdminActivity } from "@/modules/lab/content";
 
-const inputClass = "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm";
+const inputClass = "field";
 
 interface Draft {
   id?: string;
@@ -97,7 +97,7 @@ export function LabContentAdmin({ lessons }: { lessons: { id: string; number: nu
         </select>
       </label>
 
-      {msg && <p role="status" className={`rounded-md px-3 py-2 text-sm ${msg.ok ? "bg-primary-light text-primary-dark" : "bg-danger/10 text-danger"}`}>{msg.text}</p>}
+      {msg && <p role="status" className={`rounded-md px-3 py-2 text-sm ${msg.ok ? "bg-success-light text-success" : "bg-danger-light text-danger"}`}>{msg.text}</p>}
 
       {lessonId && (
         <>
@@ -127,7 +127,7 @@ export function LabContentAdmin({ lessons }: { lessons: { id: string; number: nu
       )}
 
       {draft && (
-        <div className="grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-3">
+        <div className="grid gap-3 card p-4 sm:grid-cols-3">
           <label className="text-sm font-medium">Tipo
             <select className={inputClass} value={draft.kind} onChange={(e) => setDraft({ ...draft, kind: e.target.value })}>
               {ACTIVITY_KINDS.map((k) => <option key={k}>{k}</option>)}

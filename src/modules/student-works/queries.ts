@@ -383,3 +383,16 @@ export async function recordManualEvaluation(
 
   return evaluation;
 }
+
+
+/** Trabalhos entregues e ainda sem avaliação da equipe, dentro do escopo do ator (mesmo critério da lista). */
+export async function countWorksAwaitingReview(actor: ScopeActor): Promise<number> {
+  const scope = studentScope(actor, "sw.student_id", 1);
+  if (!scope) return 0;
+  const row = await queryOne<{ count: string }>(
+    `SELECT COUNT(*) FROM student_works sw
+      WHERE sw.status = 'SUBMITTED' ${scope.where ? `AND ${scope.where}` : ""}`,
+    scope.params
+  );
+  return Number(row?.count ?? 0);
+}

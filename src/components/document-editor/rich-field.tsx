@@ -63,7 +63,7 @@ export function RichField({
   return (
     <div>
       <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
-      <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="card overflow-x-auto">
         {editable && <DocumentToolbar editor={editor} />}
         <EditorContent editor={editor} />
       </div>

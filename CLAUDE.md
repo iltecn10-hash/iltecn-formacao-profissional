@@ -1006,6 +1006,17 @@ Migration `migrations/2026-10-15_conselho_avaliacoes.sql` (aditiva): `council_ev
   vêm do banco**, não do JWT (rebaixar/desativar vale na hora). Falha do banco => sem sessão (falha fechada). Custo: 1 query por requisição autenticada.
 - Testes: `student-visibility` (integração), `staff-scope-authorization`, `session-active`. `tests/setup/testDb.ts` registra `round()` para o pg-mem.
 
+## Design system (2026-10-15, branch `feat/design-etapa1`)
+- Identidade: azul institucional (`--primary`), verde só para sucesso (`--success*`), aviso/erro com tokens próprios; tudo em `src/app/globals.css`.
+  Classes reutilizáveis (`@layer components`): `.card`, `.btn` + `.btn-primary|secondary|danger`, `.field`, `.badge-*`, `.table-base`. Foco visível global.
+- Layout: `AppShell` (`src/components/app-shell.tsx`) = barra superior (marca, usuário, Sair) + menu lateral; em telas pequenas o menu é uma gaveta.
+  `SidebarNav` agrupa por seção (Treinamento · Coordenação e acompanhamento · Cadastros) com ícones SVG próprios (`nav-icons.tsx`, sem biblioteca).
+  Rotas e autorização NÃO mudaram (o menu só filtra por perfil; a regra real é no servidor).
+- Painel da equipe (`/dashboard`): números reais **no escopo do perfil** (`countWorksAwaitingReview` + listagens com escopo). `StatCard` aceita `hint`, `href`, `tone`.
+- Conselho de Classe: tela inicial com faixa de título, cartões e acesso rápido; folha de avaliação com barra de progresso, aviso de "não salvo" +
+  `beforeunload`, contador de obrigatórios e avanço automático para o próximo aluno ao finalizar.
+- Não há busca global nem notificações (não existem no sistema). ILTECN LAB/jogos herdam as cores novas mas não tiveram os componentes refeitos.
+
 ## Comandos
 
 ```bash

@@ -155,7 +155,7 @@ export function GameAdminForm({
         {game && game.attemptsCount > 0 && <p className="mt-1 text-sm text-muted">Este jogo já tem {game.attemptsCount} partida(s) registrada(s). Mudar ids de desafios não apaga o histórico, mas zera o detalhe por desafio.</p>}
       </div>
 
-      {msg && <p role={msg.type === "error" ? "alert" : "status"} className={`rounded-2xl px-4 py-3 font-semibold ${msg.type === "error" ? "bg-danger/10 text-danger" : "bg-primary-light text-primary-dark"}`}>{msg.text}</p>}
+      {msg && <p role={msg.type === "error" ? "alert" : "status"} className={`rounded-2xl px-4 py-3 font-semibold ${msg.type === "error" ? "bg-danger-light text-danger" : "bg-primary-light text-primary-dark"}`}>{msg.text}</p>}
 
       <div className="flex flex-wrap gap-3">
         <button type="submit" className={primaryBtn} disabled={busy}>{game ? "Salvar alterações" : "Criar jogo (rascunho)"}</button>

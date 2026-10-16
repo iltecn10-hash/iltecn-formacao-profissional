@@ -161,7 +161,7 @@ export function LessonPlayer({ lesson }: { lesson: LabLessonDetail }) {
             </div>
           )}
 
-          {error && <p role="alert" className="rounded-2xl bg-danger/10 px-4 py-3 text-base font-semibold text-danger">{error}</p>}
+          {error && <p role="alert" className="rounded-2xl bg-danger-light px-4 py-3 text-base font-semibold text-danger">{error}</p>}
 
           {!finished && lesson.state !== "done" && (
             <button type="button" onClick={complete} disabled={completing || !allDone} className={primaryBtn}>

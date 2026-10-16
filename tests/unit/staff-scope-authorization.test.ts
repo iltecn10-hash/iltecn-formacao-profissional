@@ -10,6 +10,7 @@ vi.mock("@/modules/students/access", () => ({
   studentScope: vi.fn(),
 }));
 const recordManualEvaluation = vi.fn(async () => ({ id: "ev" }));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const listStaff = vi.fn(async (..._a: unknown[]) => [] as unknown[]);
 vi.mock("@/modules/student-works/queries", () => ({
   getStudentWorkById: vi.fn(async () => ({ id: "w1", student_id: "aluno-X" })),

@@ -16,7 +16,7 @@ export function MissionStepRow({ index, task }: { index: number; task: MissionTa
   const video = task.video && task.video.active ? task.video : null;
 
   return (
-    <div className="rounded-md border border-border bg-background p-3">
+    <div className="btn btn-secondary">
       <div className="flex items-start gap-2">
         <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-border text-[11px] font-medium text-muted">
           {index}

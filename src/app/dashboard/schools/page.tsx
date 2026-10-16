@@ -21,7 +21,7 @@ export default async function SchoolsPage() {
       </p>
 
       {session.role === "admin" && (
-        <div className="mt-8 rounded-lg border border-border bg-surface p-6">
+        <div className="mt-8 card p-6">
           <h2 className="font-heading text-lg font-semibold text-foreground">
             Cadastrar escola
           </h2>
@@ -31,7 +31,7 @@ export default async function SchoolsPage() {
         </div>
       )}
 
-      <div className="mt-8 overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="mt-8 card overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-background">
             <tr>

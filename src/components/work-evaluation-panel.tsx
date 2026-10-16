@@ -22,7 +22,7 @@ export function EvaluationList({ evaluations }: { evaluations: WorkEvaluation[] 
       {evaluations.map((ev) => (
         <div
           key={ev.id}
-          className="rounded-md border border-border bg-surface px-3.5 py-3 text-sm"
+          className="btn btn-secondary"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-medium text-foreground">{TYPE_LABEL[ev.evaluation_type]}</span>
@@ -36,8 +36,8 @@ export function EvaluationList({ evaluations }: { evaluations: WorkEvaluation[] 
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     ev.passed
-                      ? "bg-primary-light text-primary-dark"
-                      : "bg-danger/10 text-danger"
+                      ? "bg-success-light text-success"
+                      : "bg-danger-light text-danger"
                   }`}
                 >
                   {ev.passed ? "Aprovado" : "A revisar"}

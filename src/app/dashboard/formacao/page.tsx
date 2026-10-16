@@ -54,7 +54,7 @@ export default async function FormacaoPage() {
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="card p-6">
           <h2 className="font-heading text-lg font-semibold text-foreground">
             Nova trilha
           </h2>
@@ -63,7 +63,7 @@ export default async function FormacaoPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="card p-6">
           <h2 className="font-heading text-lg font-semibold text-foreground">
             Novo módulo
           </h2>
@@ -73,7 +73,7 @@ export default async function FormacaoPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-surface p-6">
+      <div className="mt-6 card p-6">
         <h2 className="font-heading text-lg font-semibold text-foreground">
           Nova missão
         </h2>
@@ -88,7 +88,7 @@ export default async function FormacaoPage() {
         </h2>
         <div className="mt-4 flex flex-col gap-6">
           {missionsByModule.map(({ module: mod, missions }) => (
-            <div key={mod.id} className="rounded-lg border border-border bg-surface p-5">
+            <div key={mod.id} className="card p-5">
               <p className="text-xs font-medium text-muted">
                 {trackNameById[mod.track_id]}
               </p>

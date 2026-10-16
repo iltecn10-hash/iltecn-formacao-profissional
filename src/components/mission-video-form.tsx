@@ -26,7 +26,7 @@ export function MissionVideoPanel({ missionId, video }: { missionId: string; vid
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-background"
+            className="btn btn-secondary"
           >
             {video ? "Editar vídeo" : "Adicionar vídeo"}
           </button>

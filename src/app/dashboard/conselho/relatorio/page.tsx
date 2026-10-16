@@ -32,7 +32,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
             {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>
-        <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Gerar</button>
+        <button className="btn btn-primary">Gerar</button>
       </form>
       <ContextBar ctx={ctx} extra={selected ? { class: selected.id } : undefined} />
 
@@ -43,7 +43,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-heading text-lg font-semibold">{report.class_name} · {report.period.name} de {ctx.year}</h2>
             <div className="flex gap-2">
-              <a className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-background print:hidden"
+              <a className="btn btn-secondary print:hidden"
                 href={`/api/conselho/relatorios/turma?classId=${selected!.id}&periodId=${ctx.period.id}&format=csv`}>Baixar CSV</a>
               <PrintButton />
             </div>
@@ -56,7 +56,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
           <h3 className="mt-6 text-sm font-semibold text-muted">Resumo da turma</h3>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {report.summary.map((s) => (
-              <div key={s.code} className="rounded-lg border border-border bg-surface p-4">
+              <div key={s.code} className="card p-4">
                 <p className="text-sm font-medium text-foreground">{s.label}</p>
                 <ul className="mt-1 text-sm text-muted">
                   {Object.entries(s.counts).map(([v, n]) => <li key={v}>{s.valueLabels[v]}: <strong className="text-foreground">{n}</strong></li>)}
@@ -75,7 +75,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
           </ul>
 
           <h3 className="mt-6 text-sm font-semibold text-muted">Rendimento por aluno e disciplina</h3>
-          <div className="mt-2 overflow-x-auto rounded-lg border border-border bg-surface">
+          <div className="mt-2 overflow-x-auto card">
             <table className="w-full text-sm">
               <thead className="bg-background text-left text-xs text-muted"><tr>
                 <th className="px-3 py-2">Aluno</th>{report.subjects.map((s) => <th key={s} className="px-3 py-2">{s}</th>)}</tr></thead>

@@ -6,8 +6,7 @@ import type { InternalMessage } from "@/types";
 type Recipient = { id: string; name: string; email: string; role: string };
 type Box = "inbox" | "sent";
 
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+const inputClass = "field";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("pt-BR", {
@@ -210,7 +209,7 @@ export function EmailApp({ currentUserId }: { currentUserId: string }) {
         </ul>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface p-6">
+      <div className="card p-6">
         {mode === "compose" && (
           <form onSubmit={handleSend} className="flex flex-col gap-4">
             <h2 className="font-heading text-lg font-semibold text-foreground">
@@ -277,7 +276,7 @@ export function EmailApp({ currentUserId }: { currentUserId: string }) {
             </div>
 
             {error && (
-              <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+              <p className="rounded-md bg-danger-light px-3 py-2 text-sm text-danger">
                 {error}
               </p>
             )}
@@ -286,14 +285,14 @@ export function EmailApp({ currentUserId }: { currentUserId: string }) {
               <button
                 type="submit"
                 disabled={sending}
-                className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60"
+                className="btn btn-primary"
               >
                 {sending ? "Enviando…" : "Enviar"}
               </button>
               <button
                 type="button"
                 onClick={() => setMode("view")}
-                className="rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-background"
+                className="btn btn-secondary"
               >
                 Cancelar
               </button>
@@ -329,13 +328,13 @@ export function EmailApp({ currentUserId }: { currentUserId: string }) {
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => startReply(selected)}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark"
+                className="btn btn-primary"
               >
                 Responder
               </button>
               <button
                 onClick={() => startForward(selected)}
-                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-background"
+                className="btn btn-secondary"
               >
                 Encaminhar
               </button>

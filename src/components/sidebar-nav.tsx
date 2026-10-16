@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { UserRole } from "@/types";
+import { NavIcon, type IconName } from "@/components/nav-icons";
 
 type NavGroup = "inicio" | "treinamento" | "acompanhamento" | "cadastros";
 
@@ -20,6 +21,29 @@ const GROUP_ORDER: { key: NavGroup; title: string | null }[] = [
   { key: "acompanhamento", title: "Coordenação e acompanhamento" },
   { key: "cadastros", title: "Cadastros" },
 ];
+
+const ICON_BY_HREF: Record<string, IconName> = {
+  "/dashboard": "home",
+  "/dashboard/email": "mail",
+  "/dashboard/lab": "flask",
+  "/dashboard/missoes": "book",
+  "/dashboard/jogos": "game",
+  "/dashboard/trabalhos": "file",
+  "/dashboard/conquistas": "trophy",
+  "/dashboard/certificado": "award",
+  "/dashboard/lab/certificado": "award",
+  "/dashboard/caixa": "wallet",
+  "/dashboard/produtos": "box",
+  "/dashboard/financeiro": "dollar",
+  "/dashboard/conselho": "clipboard",
+  "/dashboard/trabalhos-alunos": "file",
+  "/dashboard/relatorio": "chart",
+  "/dashboard/schools": "building",
+  "/dashboard/teachers": "user",
+  "/dashboard/students": "users",
+  "/dashboard/classes": "users",
+  "/dashboard/formacao": "settings",
+};
 
 /** Qual seção cada item pertence (separado do corpo da lista para facilitar manutenção). */
 const GROUP_BY_HREF: Record<string, NavGroup> = {
@@ -141,17 +165,20 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+/**
+ * Navegação lateral. A barra superior, o usuário e o botão "Sair" ficam no AppShell;
+ * aqui só a lista de itens (filtrada pelo perfil — a autorização real é no servidor).
+ */
 export function SidebarNav({
   role,
-  name,
   kids = false,
+  onNavigate,
 }: {
   role: UserRole;
-  name: string;
   kids?: boolean;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const items = (kids ? KIDS_NAV_ITEMS : NAV_ITEMS).filter((item) => item.roles.includes(role));
   // Aluno infantil: menu enxuto, sem seções. Demais perfis: agrupado por seção.
@@ -162,68 +189,41 @@ export function SidebarNav({
         items: items.filter((i) => (GROUP_BY_HREF[i.href] ?? "cadastros") === g.key),
       })).filter((g) => g.items.length > 0);
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
-  }
-
-  const roleLabel: Record<UserRole, string> = {
-    admin: "Administrador",
-    teacher: "Professor",
-    student: "Aluno",
-    coordinator: "Coordenador",
-  };
-
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-surface px-4 py-6">
-      <div className="px-2">
-        <p className="font-heading text-lg font-bold text-primary">ILTECN</p>
-        <p className="text-xs text-muted">Plataforma de Alfabetização Digital</p>
-      </div>
-
-      <nav className="mt-6 flex flex-1 flex-col gap-1 overflow-y-auto" aria-label="Menu principal">
-        {sections.map((section) => (
-          <div key={section.key} className="flex flex-col gap-1">
-            {section.title && (
-              <p className="mt-4 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted/70">
-                {section.title}
-              </p>
-            )}
-            {section.items.map((item) => {
-              const active =
-                item.href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                    active
-                      ? "bg-primary-light text-primary-dark"
-                      : "text-muted hover:bg-background hover:text-foreground"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      <div className="mt-auto border-t border-border pt-4">
-        <p className="truncate text-sm font-medium text-foreground">{name}</p>
-        <p className="text-xs text-muted">{roleLabel[role]}</p>
-        <button
-          onClick={handleLogout}
-          className="mt-3 w-full rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-background"
-        >
-          Sair
-        </button>
-      </div>
-    </aside>
+    <nav className="flex flex-col gap-1 px-3 py-4" aria-label="Menu principal">
+      {sections.map((section) => (
+        <div key={section.key} className="flex flex-col gap-1">
+          {section.title && (
+            <p className="mt-5 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              {section.title}
+            </p>
+          )}
+          {section.items.map((item) => {
+            const active =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname.startsWith(item.href) &&
+                  // "Meu painel" do LAB não deve ficar ativo dentro de /lab/certificado
+                  !(item.href === "/dashboard/lab" && pathname.startsWith("/dashboard/lab/certificado"));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                  active
+                    ? "bg-primary-light text-primary-dark"
+                    : "text-muted hover:bg-background hover:text-foreground"
+                }`}
+              >
+                <NavIcon name={ICON_BY_HREF[item.href] ?? "file"} />
+                <span>{item.label.replace(/^[^\p{L}]+/u, "")}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </nav>
   );
 }

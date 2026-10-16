@@ -17,7 +17,7 @@ interface Props {
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="mt-8 rounded-lg border border-border bg-surface p-6">
+    <section className="mt-8 card p-6">
       <h2 className="font-heading text-lg font-semibold text-foreground">{title}</h2>
       {hint && <p className="mt-1 text-sm text-muted">{hint}</p>}
       <div className="mt-4">{children}</div>
@@ -61,7 +61,7 @@ export function CouncilSetup(p: Props) {
 
   return (
     <div>
-      {msg && <p role="status" className={`mt-4 rounded-md px-4 py-3 text-sm ${msg.ok ? "bg-primary-light text-primary-dark" : "bg-danger/10 text-danger"}`}>{msg.text}</p>}
+      {msg && <p role="status" className={`mt-4 rounded-md px-4 py-3 text-sm ${msg.ok ? "bg-success-light text-success" : "bg-danger-light text-danger"}`}>{msg.text}</p>}
 
       <Section title="Disciplinas" hint="Professores, coordenadores e administradores podem cadastrar novas. Nomes repetidos são reaproveitados.">
         <form onSubmit={addSubject} className="flex flex-wrap gap-2">

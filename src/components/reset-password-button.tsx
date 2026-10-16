@@ -39,7 +39,7 @@ export function ResetPasswordButton({ studentId, studentName }: { studentId: str
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-background disabled:opacity-60"
+        className="btn btn-secondary"
       >
         {loading ? "Gerando…" : "Redefinir senha"}
       </button>
