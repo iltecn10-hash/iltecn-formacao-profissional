@@ -38,7 +38,13 @@ export function createTestDb() {
 
     CREATE TABLE schools (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      name VARCHAR(255) NOT NULL
+      name VARCHAR(255) NOT NULL,
+      code VARCHAR(50),
+      address TEXT,
+      city VARCHAR(100),
+      state VARCHAR(50),
+      active BOOLEAN NOT NULL DEFAULT true,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
     CREATE TABLE students (
@@ -50,20 +56,24 @@ export function createTestDb() {
       audience VARCHAR(20) NOT NULL DEFAULT 'professional',
       birth_date DATE,
       guardian_name VARCHAR(255),
-      guardian_contact VARCHAR(255)
+      guardian_contact VARCHAR(255),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
     CREATE TABLE teachers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id UUID NOT NULL REFERENCES users(id),
       school_id UUID REFERENCES schools(id),
-      bio TEXT
+      bio TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
     CREATE TABLE coordinators (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id UUID NOT NULL REFERENCES users(id),
-      school_id UUID REFERENCES schools(id)
+      school_id UUID REFERENCES schools(id),
+      position VARCHAR(20) NOT NULL DEFAULT 'coordenador',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
     CREATE TABLE classes (
@@ -73,7 +83,14 @@ export function createTestDb() {
       name VARCHAR(255) NOT NULL,
       shift VARCHAR(20),
       school_year INTEGER NOT NULL DEFAULT 2026,
-      active BOOLEAN NOT NULL DEFAULT true
+      active BOOLEAN NOT NULL DEFAULT true,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE internal_messages (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      sender_id UUID NOT NULL REFERENCES users(id),
+      recipient_id UUID NOT NULL REFERENCES users(id)
     );
 
     CREATE TABLE subjects (

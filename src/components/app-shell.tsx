@@ -27,11 +27,14 @@ export function AppShell({
   role,
   name,
   kids,
+  roleLabel,
   children,
 }: {
   role: UserRole;
   name: string;
   kids: boolean;
+  /** Cargo exibido (ex.: "Diretor"); se ausente, usa o nome do perfil. */
+  roleLabel?: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -88,7 +91,7 @@ export function AppShell({
             </span>
             <div className="max-w-48 leading-tight">
               <p className="truncate text-sm font-semibold text-foreground">{name}</p>
-              <p className="text-xs text-muted">{ROLE_LABEL[role]}</p>
+              <p className="text-xs text-muted">{roleLabel ?? ROLE_LABEL[role]}</p>
             </div>
           </div>
           <Link href="/dashboard/conta" className="btn btn-secondary">

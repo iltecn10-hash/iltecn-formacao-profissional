@@ -5,6 +5,7 @@ import { listSchools } from "@/modules/schools/queries";
 import { listTeachers } from "@/modules/teachers/queries";
 import { getActorSchoolId } from "@/modules/schools/scope";
 import { ClassForm } from "@/components/class-form";
+import { RecordActions } from "@/components/record-actions";
 
 const shiftLabel: Record<string, string> = {
   manha: "Manhã",
@@ -30,6 +31,8 @@ export default async function ClassesPage() {
   const schools =
     session.role === "admin" ? allSchools : allSchools.filter((sc) => sc.id === mySchoolId);
   const canCreate = session.role === "admin" || session.role === "teacher";
+  const myTeacherId = teachers.find((t) => t.user_id === session.userId)?.id ?? null;
+  const canManage = session.role === "admin" || session.role === "coordinator";
 
   return (
     <div>
@@ -56,12 +59,14 @@ export default async function ClassesPage() {
               <th className="px-5 py-3 font-medium text-muted">Turno</th>
               <th className="px-5 py-3 font-medium text-muted">Ano</th>
               <th className="px-5 py-3 font-medium text-muted">Alunos</th>
+              <th className="px-5 py-3 font-medium text-muted">Situação</th>
+              <th className="px-5 py-3 font-medium text-muted">Ações</th>
             </tr>
           </thead>
           <tbody>
             {classes.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-muted">
+                <td colSpan={7} className="px-5 py-8 text-center text-muted">
                   Nenhuma turma criada ainda.
                 </td>
               </tr>
@@ -75,6 +80,47 @@ export default async function ClassesPage() {
                 </td>
                 <td className="px-5 py-3 text-muted">{c.school_year}</td>
                 <td className="px-5 py-3 text-muted">{c.student_count ?? 0}</td>
+                <td className="px-5 py-3">
+                  <span className={`badge ${c.active ? "badge-success" : "badge-danger"}`}>
+                    {c.active ? "Ativa" : "Desativada"}
+                  </span>
+                </td>
+                <td className="px-5 py-3">
+                  {(canManage || (myTeacherId !== null && c.teacher_id === myTeacherId)) && (
+                    <RecordActions
+                      endpoint={`/api/classes/${c.id}`}
+                      label={c.name}
+                      active={c.active}
+                      canDelete={canManage}
+                      fields={[
+                        { name: "name", label: "Nome da turma", value: c.name, required: true },
+                        {
+                          name: "shift",
+                          label: "Turno",
+                          value: c.shift ?? "",
+                          type: "select",
+                          options: [
+                            { value: "", label: "—" },
+                            ...Object.entries(shiftLabel).map(([value, label]) => ({ value, label })),
+                          ],
+                        },
+                        { name: "schoolYear", label: "Ano letivo", value: c.school_year, type: "number", required: true },
+                        {
+                          name: "teacherId",
+                          label: "Professor",
+                          value: c.teacher_id ?? "",
+                          type: "select",
+                          options: [
+                            { value: "", label: "— sem professor —" },
+                            ...teachers
+                              .filter((t) => t.school_id === c.school_id)
+                              .map((t) => ({ value: t.id, label: t.name ?? t.email ?? "professor" })),
+                          ],
+                        },
+                      ]}
+                    />
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
