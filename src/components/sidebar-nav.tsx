@@ -29,6 +29,7 @@ const ICON_BY_HREF: Record<string, IconName> = {
   "/dashboard/missoes": "book",
   "/dashboard/jogos": "game",
   "/dashboard/trabalhos": "file",
+  "/dashboard/atividades": "clipboard",
   "/dashboard/conquistas": "trophy",
   "/dashboard/certificado": "award",
   "/dashboard/lab/certificado": "award",
@@ -63,6 +64,7 @@ const GROUP_BY_HREF: Record<string, NavGroup> = {
   "/dashboard/financeiro": "treinamento",
   "/dashboard/conselho": "acompanhamento",
   "/dashboard/trabalhos-alunos": "acompanhamento",
+  "/dashboard/atividades": "treinamento",
   "/dashboard/relatorio": "acompanhamento",
   "/dashboard/schools": "cadastros",
   "/dashboard/teachers": "cadastros",
@@ -112,6 +114,11 @@ const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/trabalhos",
     label: "Meus Trabalhos",
     roles: ["student"],
+  },
+  {
+    href: "/dashboard/atividades",
+    label: "Atividades",
+    roles: ["admin", "teacher", "coordinator", "student"],
   },
   {
     href: "/dashboard/trabalhos-alunos",

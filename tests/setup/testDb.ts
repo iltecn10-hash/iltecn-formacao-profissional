@@ -93,6 +93,48 @@ export function createTestDb() {
       recipient_id UUID NOT NULL REFERENCES users(id)
     );
 
+
+    CREATE TABLE assignments (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      school_id UUID NOT NULL REFERENCES schools(id),
+      class_id UUID NOT NULL REFERENCES classes(id),
+      created_by UUID NOT NULL REFERENCES users(id),
+      title VARCHAR(200) NOT NULL,
+      instructions TEXT,
+      due_date DATE,
+      max_score NUMERIC(5,2) NOT NULL DEFAULT 10,
+      closed BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE assignment_submissions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      assignment_id UUID NOT NULL REFERENCES assignments(id),
+      student_id UUID NOT NULL REFERENCES students(id),
+      comment TEXT,
+      status VARCHAR(12) NOT NULL DEFAULT 'submitted',
+      score NUMERIC(5,2),
+      feedback TEXT,
+      submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      evaluated_at TIMESTAMPTZ,
+      evaluated_by UUID REFERENCES users(id),
+      UNIQUE (assignment_id, student_id)
+    );
+
+    CREATE TABLE assignment_files (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      assignment_id UUID NOT NULL REFERENCES assignments(id),
+      submission_id UUID REFERENCES assignment_submissions(id),
+      kind VARCHAR(10) NOT NULL,
+      file_name VARCHAR(200) NOT NULL,
+      mime_type VARCHAR(120) NOT NULL,
+      size_bytes INTEGER NOT NULL,
+      data BYTEA NOT NULL,
+      uploaded_by UUID NOT NULL REFERENCES users(id),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
     CREATE TABLE subjects (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       school_id UUID NOT NULL REFERENCES schools(id),
