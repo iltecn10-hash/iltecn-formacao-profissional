@@ -45,6 +45,11 @@ export default function LoginPage() {
           <div className="mt-8">
             <LoginForm />
           </div>
+
+          <p className="mt-6 text-sm text-muted">
+            <strong className="text-foreground">Esqueceu a senha?</strong> Peça uma senha nova
+            para o seu professor, coordenador ou para o administrador da plataforma.
+          </p>
         </div>
       </div>
     </div>

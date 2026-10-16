@@ -43,6 +43,8 @@ const ICON_BY_HREF: Record<string, IconName> = {
   "/dashboard/students": "users",
   "/dashboard/classes": "users",
   "/dashboard/formacao": "settings",
+  "/dashboard/usuarios": "user",
+  "/dashboard/conta": "settings",
 };
 
 /** Qual seção cada item pertence (separado do corpo da lista para facilitar manutenção). */
@@ -66,6 +68,8 @@ const GROUP_BY_HREF: Record<string, NavGroup> = {
   "/dashboard/students": "cadastros",
   "/dashboard/classes": "cadastros",
   "/dashboard/formacao": "cadastros",
+  "/dashboard/usuarios": "cadastros",
+  "/dashboard/conta": "cadastros",
 };
 
 /** Menu enxuto do aluno do ILTECN LAB (crianças): poucas opções, nomes simples. */
@@ -73,6 +77,7 @@ const KIDS_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/lab", label: "🏠 Meu painel", roles: ["student"] },
   { href: "/dashboard/jogos", label: "🎮 Jogos", roles: ["student"] },
   { href: "/dashboard/lab/certificado", label: "🎓 Certificado", roles: ["student"] },
+  { href: "/dashboard/conta", label: "🔑 Minha conta", roles: ["student"] },
 ];
 
 const NAV_ITEMS: NavItem[] = [
@@ -163,6 +168,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Turmas",
     roles: ["admin", "teacher", "coordinator"],
   },
+  {
+    href: "/dashboard/usuarios",
+    label: "Acessos e senhas",
+    roles: ["admin", "teacher", "coordinator"],
+  },
+  { href: "/dashboard/conta", label: "Minha conta", roles: ["admin", "teacher", "coordinator", "student"] },
 ];
 
 /**

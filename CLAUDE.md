@@ -1017,6 +1017,13 @@ Migration `migrations/2026-10-15_conselho_avaliacoes.sql` (aditiva): `council_ev
   `beforeunload`, contador de obrigatórios e avanço automático para o próximo aluno ao finalizar.
 - Não há busca global nem notificações (não existem no sistema). ILTECN LAB/jogos herdam as cores novas mas não tiveram os componentes refeitos.
 
+## Senhas e acessos (2026-10-15, sem migration, branch `feat/senhas-usuarios`)
+- `src/lib/password-policy.ts`: `validateNewPassword(role, senha)` (aluno mín. 6; equipe mín. 8 com letra+número e fora de lista de senhas óbvias) e `generateTemporaryPassword()`.
+- `src/modules/users/queries.ts`: `listManagedUsers`, `resetUserPassword`, `changeOwnPassword` (exige a senha atual; conta desativada = não troca). Escopo no SQL: admin todas · coordenador professores e alunos da escola · professor alunos matriculados nas suas turmas · aluno nada. Coordenador/professor nunca alcançam admin/coordenação.
+- Rotas: `POST /api/account/password` (qualquer logado; usa o usuário da SESSÃO), `GET /api/users`, `POST /api/users/[id]/reset-password` (equipe; devolve a senha provisória UMA vez). Telas: `/dashboard/conta` ("Minha conta", todos os perfis) e `/dashboard/usuarios` ("Acessos e senhas").
+- Não há "esqueci minha senha" por e-mail (o projeto não tem serviço de envio): a recuperação é feita pela hierarquia (professor → coordenação → admin). A senha atual nunca é visível (só hash bcrypt). O 1º admin vem de `npm run seed` (padrão do script no repositório: troque a senha após o primeiro acesso).
+- Testes: `password-policy`, `users-authorization`, `users-passwords`. 382 testes (os de rotas do Conselho/Jogos/LAB precisam de `DATABASE_URL` fictícia no ambiente).
+
 ## Comandos
 
 ```bash
