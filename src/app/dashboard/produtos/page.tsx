@@ -22,7 +22,7 @@ export default async function ProdutosPage() {
       </h1>
       <p className="mt-1 text-muted">Catálogo e estoque fictícios para prática.</p>
 
-      <div className="mt-8 rounded-lg border border-border bg-surface p-6">
+      <div className="mt-8 card p-6">
         <h2 className="font-heading text-lg font-semibold text-foreground">
           Cadastrar produto
         </h2>
@@ -31,7 +31,7 @@ export default async function ProdutosPage() {
         </div>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="mt-8 card overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-background">
             <tr>
@@ -68,7 +68,7 @@ export default async function ProdutosPage() {
                   <td className="px-5 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        low ? "bg-danger/10 text-danger" : "bg-primary-light text-primary-dark"
+                        low ? "bg-danger-light text-danger" : "bg-primary-light text-primary-dark"
                       }`}
                     >
                       {p.stock} {low ? "· abaixo do mínimo" : ""}

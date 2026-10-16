@@ -24,7 +24,7 @@ export default async function ValidarPage({ params }: { params: Promise<{ code: 
           </dl>
         </div>
       ) : (
-        <p className="mt-6 rounded-3xl border-2 border-danger bg-danger/10 p-6 text-lg font-semibold text-danger">
+        <p className="mt-6 rounded-3xl border-2 border-danger bg-danger-light p-6 text-lg font-semibold text-danger">
           ❌ Código não encontrado. Confira se digitou certinho.
         </p>
       )}

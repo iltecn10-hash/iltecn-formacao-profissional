@@ -17,7 +17,7 @@ export default async function ConselhoPage({ searchParams }: { searchParams: Pro
     return (
       <div>
         <h1 className="font-heading text-2xl font-bold text-foreground">Conselho de Classe</h1>
-        <p className="mt-4 rounded-lg border border-border bg-surface p-6 text-sm text-muted">
+        <p className="mt-4 card p-6 text-sm text-muted">
           Seu cadastro ainda não está ligado a uma escola. Peça ao administrador para concluir o cadastro.
         </p>
       </div>
@@ -62,7 +62,7 @@ export default async function ConselhoPage({ searchParams }: { searchParams: Pro
             ["Vínculos", panel.totals.assignments], ["Concluídos", panel.totals.concluded],
             ["Em andamento", panel.totals.inProgress], ["Não iniciados", panel.totals.notStarted],
           ].map(([l, n]) => (
-            <div key={l as string} className="rounded-lg border border-border bg-surface p-4">
+            <div key={l as string} className="card p-4">
               <p className="text-2xl font-bold text-primary-dark">{n}</p>
               <p className="text-xs text-muted">{l}</p>
             </div>
@@ -74,7 +74,7 @@ export default async function ConselhoPage({ searchParams }: { searchParams: Pro
         <div className="mt-8">
           <h2 className="font-heading text-lg font-semibold text-foreground">Minhas avaliações — {ctx.period?.name}</h2>
           {mine.length === 0 ? (
-            <p className="mt-3 rounded-lg border border-border bg-surface p-6 text-sm text-muted">
+            <p className="mt-3 card p-6 text-sm text-muted">
               Você ainda não está vinculado a nenhuma turma e disciplina neste ano. A coordenação faz o
               vínculo em Configuração (ou você mesmo, nas turmas pelas quais é responsável).
             </p>
@@ -83,7 +83,7 @@ export default async function ConselhoPage({ searchParams }: { searchParams: Pro
               {mine.map((a, i) => {
                 const s = sheets[i];
                 return (
-                  <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4">
+                  <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 card p-4">
                     <div>
                       <p className="font-medium text-foreground">{a.class_name} · {a.subject_name}</p>
                       <p className="text-xs text-muted">

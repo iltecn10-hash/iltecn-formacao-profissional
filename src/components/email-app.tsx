@@ -6,8 +6,7 @@ import type { InternalMessage } from "@/types";
 type Recipient = { id: string; name: string; email: string; role: string };
 type Box = "inbox" | "sent";
 
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+const inputClass = "field";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("pt-BR", {
@@ -210,7 +209,7 @@ export function EmailApp({ currentUserId }: { currentUserId: string }) {
         </ul>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface p-6">
+      <div className="card p-6">
         {mode === "compose" && (
           <form onSubmit={handleSend} className="flex flex-col gap-4">
             <h2 className="font-heading text-lg font-semibold text-foreground">
@@ -277,7 +276,7 @@ export function EmailApp({ currentUserId }: { currentUserId: string }) {
             </div>
 
             {error && (
-              <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+              <p className="rounded-md bg-danger-light px-3 py-2 text-sm text-danger">
                 {error}
               </p>
             )}

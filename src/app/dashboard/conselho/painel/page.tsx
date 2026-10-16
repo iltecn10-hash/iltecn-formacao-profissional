@@ -11,7 +11,7 @@ const stateLabel: Record<PanelRow["state"], string> = {
 };
 const stateStyle: Record<PanelRow["state"], string> = {
   concluida: "bg-primary-light text-primary-dark", em_andamento: "bg-accent/20 text-foreground",
-  nao_iniciada: "bg-danger/10 text-danger", sem_alunos: "bg-background text-muted",
+  nao_iniciada: "bg-danger-light text-danger", sem_alunos: "bg-background text-muted",
 };
 
 export default async function PainelPage({ searchParams }: { searchParams: Promise<ContextParams> }) {
@@ -46,7 +46,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
         </p>
       )}
 
-      <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-surface">
+      <div className="mt-4 overflow-x-auto card">
         <table className="w-full text-sm">
           <thead className="bg-background text-left text-xs text-muted">
             <tr><th className="px-4 py-2">Turma</th><th className="px-4 py-2">Disciplina</th><th className="px-4 py-2">Professor(a)</th>

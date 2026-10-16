@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import type { CashRegister, Product, PaymentMethod, Sale } from "@/types";
 
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+const inputClass = "field";
 
 type CartItem = { productId: string; name: string; unitPrice: number; quantity: number };
 
@@ -165,7 +164,7 @@ export function CaixaApp() {
 
   if (register === null) {
     return (
-      <div className="mt-6 max-w-sm rounded-lg border border-border bg-surface p-6">
+      <div className="mt-6 max-w-sm card p-6">
         <h2 className="font-heading text-lg font-semibold text-foreground">
           Abrir caixa
         </h2>
@@ -186,7 +185,7 @@ export function CaixaApp() {
           />
         </div>
         {error && (
-          <p className="mt-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+          <p className="mt-3 rounded-md bg-danger-light px-3 py-2 text-sm text-danger">
             {error}
           </p>
         )}
@@ -203,7 +202,7 @@ export function CaixaApp() {
   return (
     <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
       <div>
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="card p-6">
           <label className="mb-1.5 block text-sm font-medium text-foreground">
             Buscar produto (nome ou código)
           </label>
@@ -233,7 +232,7 @@ export function CaixaApp() {
           )}
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface">
+        <div className="mt-6 card overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-background">
               <tr>
@@ -299,7 +298,7 @@ export function CaixaApp() {
         )}
       </div>
 
-      <div className="rounded-lg border border-border bg-surface p-6">
+      <div className="card p-6">
         <h2 className="font-heading text-lg font-semibold text-foreground">Fechamento</h2>
 
         <div className="mt-4">
@@ -348,7 +347,7 @@ export function CaixaApp() {
         </div>
 
         {error && (
-          <p className="mt-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+          <p className="mt-3 rounded-md bg-danger-light px-3 py-2 text-sm text-danger">
             {error}
           </p>
         )}

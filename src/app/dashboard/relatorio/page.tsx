@@ -19,7 +19,7 @@ function StudentReportView({
       : Math.round((report.missionsCompleted / report.missionsTotal) * 100);
 
   return (
-    <div className="mt-6 rounded-lg border border-border bg-surface p-6">
+    <div className="mt-6 card p-6">
       <div className="flex items-start justify-between">
         <div>
           <h2 className="font-heading text-lg font-semibold text-foreground">
@@ -167,7 +167,7 @@ export default async function RelatorioPage({
                   >
                     <span className="text-foreground">{s.name}</span>
                     {low && (
-                      <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs text-danger">
+                      <span className="rounded-full bg-danger-light px-2 py-0.5 text-xs text-danger">
                         sem progresso
                       </span>
                     )}

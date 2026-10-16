@@ -104,7 +104,7 @@ export function ActivityRunner({
       </div>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-2xl bg-danger/10 px-4 py-3 text-base font-semibold text-danger">
+        <p role="alert" className="mt-4 rounded-2xl bg-danger-light px-4 py-3 text-base font-semibold text-danger">
           {error}
         </p>
       )}

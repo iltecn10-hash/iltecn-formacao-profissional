@@ -23,7 +23,7 @@ const statusStyle: Record<StudentWorkStatus, string> = {
   DRAFT: "bg-border text-muted",
   IN_PROGRESS: "bg-primary-light text-primary-dark",
   SUBMITTED: "bg-accent-light text-accent",
-  RETURNED: "bg-danger/10 text-danger",
+  RETURNED: "bg-danger-light text-danger",
   APPROVED: "bg-primary text-white",
 };
 
@@ -83,7 +83,7 @@ export default async function TrabalhosAlunosPage({
 
         <div>
           {selected ? (
-            <div className="rounded-lg border border-border bg-surface p-5">
+            <div className="card p-5">
               <p className="text-xs uppercase tracking-wide text-muted">
                 {selected.mission_title} · {selected.student_name}
               </p>
@@ -97,7 +97,7 @@ export default async function TrabalhosAlunosPage({
               {selected.submitted_at && <ManualEvaluationForm workId={selected.id} />}
             </div>
           ) : (
-            <p className="rounded-lg border border-border bg-surface p-5 text-sm text-muted">
+            <p className="card p-5 text-sm text-muted">
               Selecione um trabalho na lista ao lado.
             </p>
           )}

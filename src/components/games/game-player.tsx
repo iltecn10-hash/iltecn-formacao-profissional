@@ -135,7 +135,7 @@ function StartScreen({ game, onStart, busy, error }: { game: GameDetail; onStart
       )}
       {game.lockReason && <p role="alert" className="rounded-2xl bg-accent-light px-4 py-3 text-base font-semibold">🔒 {game.lockReason}</p>}
       {game.state === "limit" && <p role="alert" className="rounded-2xl bg-accent-light px-4 py-3 text-base font-semibold">Você usou todas as tentativas deste jogo. Fale com o seu professor.</p>}
-      {error && <p role="alert" className="rounded-2xl bg-danger/10 px-4 py-3 text-base font-semibold text-danger">{error}</p>}
+      {error && <p role="alert" className="rounded-2xl bg-danger-light px-4 py-3 text-base font-semibold text-danger">{error}</p>}
 
       <button type="button" className={primaryBtn} disabled={busy || blocked} onClick={onStart}>
         {game.state === "in_progress" ? "Continuar" : game.attempts > 0 ? "Jogar de novo" : "Começar"}
@@ -248,7 +248,7 @@ function Playing({
         </ol>
       </header>
 
-      {(error || localError) && <p role="alert" className="rounded-2xl bg-danger/10 px-4 py-3 text-base font-semibold text-danger">{localError ?? error}</p>}
+      {(error || localError) && <p role="alert" className="rounded-2xl bg-danger-light px-4 py-3 text-base font-semibold text-danger">{localError ?? error}</p>}
 
       <section aria-labelledby="fase-titulo" className="space-y-4">
         <div>
@@ -401,7 +401,7 @@ function ResultScreen({ game, result, onRetry, busy, error }: { game: GameDetail
         </ul>
       </section>
 
-      {error && <p role="alert" className="rounded-2xl bg-danger/10 px-4 py-3 text-base font-semibold text-danger">{error}</p>}
+      {error && <p role="alert" className="rounded-2xl bg-danger-light px-4 py-3 text-base font-semibold text-danger">{error}</p>}
       <div className="flex flex-wrap gap-3">
         {canRetry && <button type="button" className={primaryBtn} disabled={busy} onClick={onRetry}>{result.passed ? "Jogar de novo" : "Tentar de novo"}</button>}
         <Link href="/dashboard/jogos" className={`${softBtn} inline-flex items-center`}>Voltar aos jogos</Link>

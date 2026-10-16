@@ -89,7 +89,7 @@ export function LabMonitor({ classes, isAdmin = false }: { classes: { id: string
         </button>
       </div>
 
-      {error && <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
+      {error && <p role="alert" className="rounded-md bg-danger-light px-3 py-2 text-sm text-danger">{error}</p>}
 
       {sum && (
         <div className="grid gap-3 sm:grid-cols-4">
@@ -109,7 +109,7 @@ export function LabMonitor({ classes, isAdmin = false }: { classes: { id: string
 
       <ul className="space-y-3">
         {students.map((s) => (
-          <li key={s.id} className="rounded-lg border border-border bg-surface p-4">
+          <li key={s.id} className="card p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div>
                 <p className="font-heading text-lg font-semibold">{s.name}</p>
@@ -138,7 +138,7 @@ export function LabMonitor({ classes, isAdmin = false }: { classes: { id: string
               {s.hasCertificate ? " · 🎓 certificado emitido" : ""}
             </p>
             {s.needsHelp.length > 0 && (
-              <ul className="mt-2 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+              <ul className="mt-2 rounded-md bg-danger-light px-3 py-2 text-sm text-danger">
                 {s.needsHelp.map((h) => (
                   <li key={h}>⚠️ {h}</li>
                 ))}
@@ -153,7 +153,7 @@ export function LabMonitor({ classes, isAdmin = false }: { classes: { id: string
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-lg border border-border bg-surface px-4 py-3">
+    <div className="card px-4 py-3">
       <p className="text-xs text-muted">{label}</p>
       <p className="font-heading text-2xl font-bold">{value}</p>
     </div>

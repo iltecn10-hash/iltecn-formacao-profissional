@@ -111,4 +111,12 @@ describe("escopo de alunos para a equipe (trabalhos e relatórios)", () => {
     expect(Number(await rate(coordB))).toBe(100);                  // 1 de 1 da escola B
     expect(await reports.getModulePerformance(aluno)).toEqual([]);
   });
+
+  it("countWorksAwaitingReview conta só trabalhos ENTREGUES do escopo", async () => {
+    await testDb.query(`UPDATE student_works SET status = 'SUBMITTED' WHERE student_id IN ($1,$2,$3)`, [stRes, stOut, stB]);
+    expect(await works.countWorksAwaitingReview(prof)).toBe(1);   // só stRes
+    expect(await works.countWorksAwaitingReview(coordA)).toBe(2); // stRes + stOut
+    expect(await works.countWorksAwaitingReview(adm)).toBe(3);
+    expect(await works.countWorksAwaitingReview(aluno)).toBe(0);
+  });
 });

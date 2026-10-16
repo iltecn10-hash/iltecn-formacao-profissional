@@ -189,7 +189,7 @@ export function SpreadsheetWorkEditor({
         </p>
       )}
       {status === "RETURNED" && !readOnly && (
-        <p className="mt-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger print:hidden">
+        <p className="mt-3 rounded-md bg-danger-light px-3 py-2 text-sm text-danger print:hidden">
           Esta planilha foi devolvida pelo professor. Reveja o feedback abaixo, ajuste o que for
           necessário e entregue novamente.
         </p>
@@ -238,7 +238,7 @@ export function SpreadsheetWorkEditor({
       )}
 
       {submitError && (
-        <p className="mt-4 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger print:hidden">
+        <p className="mt-4 rounded-md bg-danger-light px-3 py-2 text-sm text-danger print:hidden">
           {submitError}
         </p>
       )}

@@ -17,7 +17,7 @@ const statusStyle: Record<string, string> = {
   pendente: "bg-accent-light text-accent",
   pago: "bg-primary-light text-primary-dark",
   recebido: "bg-primary-light text-primary-dark",
-  vencido: "bg-danger/10 text-danger",
+  vencido: "bg-danger-light text-danger",
 };
 
 export default async function FinanceiroPage() {
@@ -52,7 +52,7 @@ export default async function FinanceiroPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="card p-6">
           <h2 className="font-heading text-lg font-semibold text-foreground">
             Nova conta a pagar
           </h2>
@@ -60,7 +60,7 @@ export default async function FinanceiroPage() {
             <FinanceForm type="payable" suppliers={suppliers} customers={customers} />
           </div>
         </div>
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="card p-6">
           <h2 className="font-heading text-lg font-semibold text-foreground">
             Nova conta a receber
           </h2>
@@ -73,7 +73,7 @@ export default async function FinanceiroPage() {
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
           <h3 className="text-sm font-semibold text-muted">Contas a pagar</h3>
-          <div className="mt-3 overflow-hidden rounded-lg border border-border bg-surface">
+          <div className="mt-3 card overflow-x-auto">
             <table className="w-full text-left text-sm">
               <tbody>
                 {payable.length === 0 && (
@@ -109,7 +109,7 @@ export default async function FinanceiroPage() {
 
         <div>
           <h3 className="text-sm font-semibold text-muted">Contas a receber</h3>
-          <div className="mt-3 overflow-hidden rounded-lg border border-border bg-surface">
+          <div className="mt-3 card overflow-x-auto">
             <table className="w-full text-left text-sm">
               <tbody>
                 {receivable.length === 0 && (

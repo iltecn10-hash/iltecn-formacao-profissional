@@ -33,13 +33,13 @@ export default async function RelatorioAlunoPage({ params }: { params: Promise<{
         {session.role === "teacher" ? "Mostra apenas as avaliações feitas por você. " : ""}
         Somente avaliações finalizadas. Apoio pedagógico — não é nota oficial nem decisão de aprovação.
       </p>
-      {groups.size === 0 && <p className="mt-6 rounded-lg border border-border bg-surface p-6 text-sm text-muted">Nenhuma avaliação finalizada para este aluno.</p>}
+      {groups.size === 0 && <p className="mt-6 card p-6 text-sm text-muted">Nenhuma avaliação finalizada para este aluno.</p>}
       {[...groups].map(([title, entries]) => (
         <section key={title} className="mt-6 break-inside-avoid">
           <h2 className="font-heading text-lg font-semibold text-foreground">{title}</h2>
           <div className="mt-2 flex flex-col gap-3">
             {entries.map((e) => (
-              <div key={e.subject_name} className="rounded-lg border border-border bg-surface p-4">
+              <div key={e.subject_name} className="card p-4">
                 <p className="font-medium text-foreground">{e.subject_name}</p>
                 <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
                   {Object.entries(e.answers).filter(([, a]) => a.valueLabel !== undefined).map(([code, a]) => (

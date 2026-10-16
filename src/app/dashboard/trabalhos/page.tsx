@@ -17,7 +17,7 @@ const statusStyle: Record<StudentWorkStatus, string> = {
   DRAFT: "bg-border text-muted",
   IN_PROGRESS: "bg-primary-light text-primary-dark",
   SUBMITTED: "bg-accent-light text-accent",
-  RETURNED: "bg-danger/10 text-danger",
+  RETURNED: "bg-danger-light text-danger",
   APPROVED: "bg-primary text-white",
 };
 
@@ -44,7 +44,7 @@ export default async function MeusTrabalhosPage() {
 
       <div className="mt-8 flex flex-col gap-3">
         {works.length === 0 && (
-          <p className="rounded-lg border border-border bg-surface p-5 text-sm text-muted">
+          <p className="card p-5 text-sm text-muted">
             Você ainda não começou nenhum trabalho. Abra uma missão que peça um documento ou
             planilha para começar.
           </p>
@@ -52,7 +52,7 @@ export default async function MeusTrabalhosPage() {
         {works.map((work) => (
           <div
             key={work.id}
-            className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4"
+            className="flex items-center justify-between gap-4 card p-4"
           >
             <div>
               <p className="font-medium text-foreground">{work.title || "(sem título)"}</p>

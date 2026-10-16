@@ -14,7 +14,7 @@ interface RowState {
 
 const statusLabel = { none: "Não iniciada", draft: "Rascunho", final: "Finalizada" } as const;
 const statusStyle = {
-  none: "bg-background text-muted", draft: "bg-accent/20 text-foreground", final: "bg-primary-light text-primary-dark",
+  none: "bg-background text-muted", draft: "bg-accent/20 text-foreground", final: "bg-success-light text-success",
 } as const;
 
 export function EvaluationSheet({ sheet, editable, canReopen }: { sheet: Sheet; editable: boolean; canReopen: boolean }) {
@@ -74,7 +74,7 @@ export function EvaluationSheet({ sheet, editable, canReopen }: { sheet: Sheet; 
         {!editable && " Somente consulta."}
       </p>
       {sheet.students.length === 0 && (
-        <p className="mt-4 rounded-lg border border-border bg-surface p-6 text-sm text-muted">Nenhum aluno matriculado nesta turma.</p>
+        <p className="mt-4 card p-6 text-sm text-muted">Nenhum aluno matriculado nesta turma.</p>
       )}
       <ul className="mt-3 flex flex-col gap-3">
         {sheet.students.map((s) => {
@@ -82,7 +82,7 @@ export function EvaluationSheet({ sheet, editable, canReopen }: { sheet: Sheet; 
           const isOpen = open === s.student_id;
           const locked = !editable || row.status === "final";
           return (
-            <li key={s.student_id} className="rounded-lg border border-border bg-surface">
+            <li key={s.student_id} className="card">
               <button
                 type="button" aria-expanded={isOpen}
                 onClick={() => setOpen(isOpen ? null : s.student_id)}

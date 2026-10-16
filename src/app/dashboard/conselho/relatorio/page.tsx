@@ -56,7 +56,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
           <h3 className="mt-6 text-sm font-semibold text-muted">Resumo da turma</h3>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {report.summary.map((s) => (
-              <div key={s.code} className="rounded-lg border border-border bg-surface p-4">
+              <div key={s.code} className="card p-4">
                 <p className="text-sm font-medium text-foreground">{s.label}</p>
                 <ul className="mt-1 text-sm text-muted">
                   {Object.entries(s.counts).map(([v, n]) => <li key={v}>{s.valueLabels[v]}: <strong className="text-foreground">{n}</strong></li>)}
@@ -75,7 +75,7 @@ export default async function RelatorioPage({ searchParams }: { searchParams: Pr
           </ul>
 
           <h3 className="mt-6 text-sm font-semibold text-muted">Rendimento por aluno e disciplina</h3>
-          <div className="mt-2 overflow-x-auto rounded-lg border border-border bg-surface">
+          <div className="mt-2 overflow-x-auto card">
             <table className="w-full text-sm">
               <thead className="bg-background text-left text-xs text-muted"><tr>
                 <th className="px-3 py-2">Aluno</th>{report.subjects.map((s) => <th key={s} className="px-3 py-2">{s}</th>)}</tr></thead>

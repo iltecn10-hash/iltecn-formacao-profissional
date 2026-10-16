@@ -4,8 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Category, Supplier } from "@/types";
 
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+const inputClass = "field";
 
 export function ProductForm({
   categories,
@@ -153,7 +152,7 @@ export function ProductForm({
       </div>
 
       {error && (
-        <p className="sm:col-span-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+        <p className="sm:col-span-3 rounded-md bg-danger-light px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}

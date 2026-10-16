@@ -36,8 +36,8 @@ export function EvaluationList({ evaluations }: { evaluations: WorkEvaluation[] 
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     ev.passed
-                      ? "bg-primary-light text-primary-dark"
-                      : "bg-danger/10 text-danger"
+                      ? "bg-success-light text-success"
+                      : "bg-danger-light text-danger"
                   }`}
                 >
                   {ev.passed ? "Aprovado" : "A revisar"}

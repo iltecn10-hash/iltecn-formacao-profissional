@@ -19,8 +19,8 @@ const statusStyle: Record<MissionAttemptStatus, string> = {
   bloqueada: "bg-border text-muted",
   disponivel: "bg-accent-light text-accent",
   em_andamento: "bg-primary-light text-primary-dark",
-  concluida: "bg-primary text-white",
-  refazer: "bg-danger/10 text-danger",
+  concluida: "bg-success text-white",
+  refazer: "bg-danger-light text-danger",
 };
 
 export function MissionCard({
@@ -122,7 +122,7 @@ export function MissionCard({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-5">
+    <div className="card p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="font-heading font-semibold text-foreground">{title}</h3>

@@ -91,7 +91,7 @@ export function SpreadsheetGrid({
                     title={cell.error}
                     className={`min-w-[7rem] whitespace-nowrap border border-border px-2 py-1.5 ${
                       editable ? "cursor-text hover:bg-background" : ""
-                    } ${cell.error ? "bg-danger/10 text-danger" : cell.isFormula ? "text-primary-dark" : "text-foreground"}`}
+                    } ${cell.error ? "bg-danger-light text-danger" : cell.isFormula ? "text-primary-dark" : "text-foreground"}`}
                   >
                     {cell.display}
                   </td>

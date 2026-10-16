@@ -61,7 +61,7 @@
   .btn-secondary { @apply border border-border bg-surface text-foreground hover:bg-background; }
   .btn-danger { @apply bg-danger text-white hover:opacity-90; }
   .field {
-    @apply min-h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted/70 disabled:bg-background;
+    @apply min-h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted/70 disabled:bg-background outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20;
   }
   .badge {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
