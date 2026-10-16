@@ -6,7 +6,8 @@ import {
   listAssignmentsForStudent,
   listManageableClasses,
 } from "@/modules/assignments/queries";
-import { AssignmentForm } from "@/components/assignments/assignment-form";
+import { NewAssignmentPanel } from "@/components/assignments/new-assignment-panel";
+import { RecordActions } from "@/components/record-actions";
 
 const STATUS_LABEL = { submitted: "Entregue", returned: "Devolvida para refazer", evaluated: "Avaliada" } as const;
 
@@ -61,14 +62,7 @@ export default async function AtividadesPage() {
         Cadastre atividades, deixe materiais para os alunos baixarem e veja o que cada um entregou.
       </p>
 
-      {canCreate && (
-        <div className="mt-8 card p-6">
-          <h2 className="font-heading text-lg font-semibold text-foreground">Nova atividade</h2>
-          <div className="mt-4">
-            <AssignmentForm classes={classes} />
-          </div>
-        </div>
-      )}
+      {canCreate && <NewAssignmentPanel classes={classes} startOpen={list.length === 0} />}
 
       <div className="mt-8 card overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -79,12 +73,13 @@ export default async function AtividadesPage() {
               <th className="px-5 py-3 font-medium text-muted">Prazo</th>
               <th className="px-5 py-3 font-medium text-muted">Entregas</th>
               <th className="px-5 py-3 font-medium text-muted">Situação</th>
+              {canCreate && <th className="px-5 py-3 font-medium text-muted">Ações</th>}
             </tr>
           </thead>
           <tbody>
             {list.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-muted">
+                <td colSpan={canCreate ? 6 : 5} className="px-5 py-8 text-center text-muted">
                   Nenhuma atividade cadastrada ainda.
                 </td>
               </tr>
@@ -104,6 +99,20 @@ export default async function AtividadesPage() {
                 <td className="px-5 py-3">
                   <span className={`badge ${a.closed ? "badge-danger" : "badge-success"}`}>{a.closed ? "Encerrada" : "Aberta"}</span>
                 </td>
+                {canCreate && (
+                  <td className="px-5 py-3">
+                    <RecordActions
+                      endpoint={`/api/assignments/${a.id}`}
+                      label={a.title}
+                      active={!a.closed}
+                      fields={[
+                        { name: "title", label: "Título", value: a.title, required: true },
+                        { name: "instructions", label: "Instruções", value: a.instructions, type: "textarea" },
+                        { name: "dueDate", label: "Prazo", value: a.due_date, type: "date" },
+                      ]}
+                    />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
