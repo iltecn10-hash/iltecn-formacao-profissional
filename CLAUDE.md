@@ -1060,7 +1060,7 @@ não tem armazenamento de objetos). Limites no servidor (`src/lib/uploads.ts`): 
 **Sempre** criar um ponto de restauração ANTES de publicar: (1) branch no GitHub `backup/antes-<mudança>-AAAA-MM-DD` apontando para o `main` atual
 (`git push origin <sha>:refs/heads/backup/...`; o envio de *tags* é recusado pelo proxy do sandbox); (2) snapshot do Neon (`create_snapshot` na branch `br-fancy-morning-axjthn7q`).
 Para voltar o site: no Vercel, "Promote" do deploy anterior. Para voltar o banco: `restore_snapshot`. Pontos existentes: `backup/antes-novo-design-2026-10-15`,
-`backup/antes-atividades-2026-10-16` + snapshot `backup-antes-atividades-2026-10-16` (`snap-weathered-dust-axomg328`).
+`backup/antes-atividades-2026-10-16` + snapshot `backup-antes-atividades-2026-10-16` (`snap-weathered-dust-axomg328`), `backup/antes-arquivos-aluno-2026-10-16` + branch Neon `backup-antes-arquivos-aluno-2026-10-16` (`br-snowy-lab-axjy99v6`). **O limite de snapshots do Neon foi atingido** (HTTP 422): usar `create_branch` como backup do banco, ou pedir ao usuário para apagar snapshots antigos.
 
 ## Comandos
 
