@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UserRole } from "@/types";
@@ -90,6 +91,9 @@ export function AppShell({
               <p className="text-xs text-muted">{ROLE_LABEL[role]}</p>
             </div>
           </div>
+          <Link href="/dashboard/conta" className="btn btn-secondary">
+            Minha conta
+          </Link>
           <button type="button" onClick={handleLogout} className="btn btn-secondary">
             Sair
           </button>
