@@ -1053,6 +1053,7 @@ não tem armazenamento de objetos). Limites no servidor (`src/lib/uploads.ts`): 
   com matrícula ativa e só a própria entrega. Reenviar substitui os arquivos; avaliada trava o reenvio; "devolver" reabre; atividade encerrada não recebe entrega. Excluir com entrega só ENCERRA.
 - Rotas: `GET|POST /api/assignments` (multipart no POST), `PATCH|DELETE /api/assignments/[id]` (`{active}` = abrir/encerrar), `POST /api/assignments/[id]/submit` (aluno),
   `POST /api/assignments/submissions/[sid]/evaluate`, `GET /api/assignments/files/[fileId]`. Telas: `/dashboard/atividades` e `/dashboard/atividades/[id]`; menu "Atividades" (todos, exceto o menu infantil).
+- Ficha do aluno: `/dashboard/students/[id]/arquivos` (link "Ver arquivos" na tela Alunos; escopo `canActorViewStudent` + só entregas de atividades que o ator acessa — `listDeliveriesForStudent`).
 **Ordem de deploy: migration → deploy do código.** Testes: `assignments` (integração), `assignments-authorization`, `uploads`. Limitação: sem varredura de vírus e sem edição dos materiais depois de criada a atividade.
 
 ## Backups antes de publicar (regra do usuário, 2026-10-16)
