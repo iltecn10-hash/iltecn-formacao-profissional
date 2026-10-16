@@ -6,13 +6,16 @@ import { FilePicker } from "./file-picker";
 
 export function AssignmentForm({
   classes,
+  subjects,
   onCreated,
 }: {
-  classes: { id: string; name: string }[];
+  classes: { id: string; name: string; school_id: string }[];
+  subjects: { id: string; name: string; school_id: string }[];
   onCreated?: () => void;
 }) {
   const router = useRouter();
   const [classId, setClassId] = useState(classes[0]?.id ?? "");
+  const [subjectId, setSubjectId] = useState("");
   const [title, setTitle] = useState("");
   const [instructions, setInstructions] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -31,6 +34,7 @@ export function AssignmentForm({
     const body = new FormData();
     body.set("classId", classId);
     body.set("title", title);
+    if (subjectId) body.set("subjectId", subjectId);
     body.set("instructions", instructions);
     if (dueDate) body.set("dueDate", dueDate);
     files.forEach((f) => body.append("files", f));
@@ -42,6 +46,7 @@ export function AssignmentForm({
       return;
     }
     setTitle("");
+    setSubjectId("");
     setInstructions("");
     setDueDate("");
     setFiles([]);
@@ -49,14 +54,35 @@ export function AssignmentForm({
     onCreated?.();
   }
 
+  const schoolId = classes.find((c) => c.id === classId)?.school_id;
+  const classSubjects = subjects.filter((x) => x.school_id === schoolId);
+
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">Turma</label>
-        <select value={classId} onChange={(e) => setClassId(e.target.value)} className="field">
+        <select
+          value={classId}
+          onChange={(e) => {
+            setClassId(e.target.value);
+            setSubjectId("");
+          }}
+          className="field"
+        >
           {classes.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="sm:col-span-2">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Disciplina</label>
+        <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="field">
+          <option value="">Sem disciplina específica</option>
+          {classSubjects.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.name}
             </option>
           ))}
         </select>

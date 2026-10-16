@@ -9,6 +9,7 @@ const empty = (v: unknown) => (typeof v === "string" && v.trim() === "" ? null :
 const editSchema = z.object({
   title: z.string().trim().min(3, "Dê um título à atividade.").max(200),
   instructions: z.preprocess(empty, z.string().max(5000).nullable().optional()),
+  subjectId: z.preprocess(empty, z.string().uuid("Disciplina inválida.").nullable().optional()),
   dueDate: z.preprocess(empty, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida.").nullable().optional()),
 });
 // "active" = atividade aberta (reativar/desativar do RecordActions).

@@ -6,9 +6,11 @@ import { AssignmentForm } from "./assignment-form";
 /** Botão "+ Nova atividade" que abre/fecha o formulário (abre sozinho quando ainda não há atividades). */
 export function NewAssignmentPanel({
   classes,
+  subjects,
   startOpen,
 }: {
-  classes: { id: string; name: string }[];
+  classes: { id: string; name: string; school_id: string }[];
+  subjects: { id: string; name: string; school_id: string }[];
   startOpen: boolean;
 }) {
   const [open, setOpen] = useState(startOpen);
@@ -21,7 +23,7 @@ export function NewAssignmentPanel({
         <div className="mt-4 card p-6">
           <h2 className="font-heading text-lg font-semibold text-foreground">Nova atividade</h2>
           <div className="mt-4">
-            <AssignmentForm classes={classes} onCreated={() => setOpen(false)} />
+            <AssignmentForm classes={classes} subjects={subjects} onCreated={() => setOpen(false)} />
           </div>
         </div>
       )}

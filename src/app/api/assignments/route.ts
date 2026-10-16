@@ -21,6 +21,7 @@ const createSchema = z.object({
   title: z.string().min(3, "Dê um título à atividade.").max(200, "Título muito longo."),
   instructions: z.string().max(5000, "Instruções muito longas.").optional(),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida.").optional(),
+  subjectId: z.string().uuid("Disciplina inválida.").optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
     title: text(form.get("title")),
     instructions: text(form.get("instructions")) || undefined,
     dueDate: text(form.get("dueDate")) || undefined,
+    subjectId: text(form.get("subjectId")) || undefined,
   });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });

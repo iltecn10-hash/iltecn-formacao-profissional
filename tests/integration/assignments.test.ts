@@ -61,6 +61,23 @@ describe("atividades da turma", () => {
     expect((await A.listMaterials(aid)).map((m) => m.file_name)).toEqual(["material.txt"]);
   });
 
+  it("disciplina é opcional, precisa ser da escola da turma e pode ser trocada na edição", async () => {
+    const subA = await mk("subjects", "school_id, name, name_key", [id.schoolA, "Matemática", "matematica"]);
+    const subB = await mk("subjects", "school_id, name, name_key", [id.schoolB, "História", "historia"]);
+    await expect(
+      A.createAssignment(as("teachA", "teacher"), { classId: id.classA, title: "x", subjectId: subB }, [])
+    ).rejects.toMatchObject({ status: 400 });
+    const aid = (await A.createAssignment(as("teachA", "teacher"), { classId: id.classA, title: "Com disciplina", subjectId: subA }, [])).id;
+    const list = await A.listAssignmentsForStaff(as("teachA", "teacher"));
+    expect(list.find((a) => a.id === aid)?.subject_name).toBe("Matemática");
+    // editar sem mexer na disciplina mantém; "" remove; outra escola é recusada
+    await A.updateAssignment(as("teachA", "teacher"), aid, { title: "Novo título" });
+    expect((await A.getAssignmentAccess(as("teachA", "teacher"), aid))?.assignment.subject_id).toBe(subA);
+    await expect(A.updateAssignment(as("teachA", "teacher"), aid, { title: "x", subjectId: subB })).rejects.toMatchObject({ status: 400 });
+    await A.updateAssignment(as("teachA", "teacher"), aid, { title: "x", subjectId: "" });
+    expect((await A.getAssignmentAccess(as("teachA", "teacher"), aid))?.assignment.subject_id).toBeNull();
+  });
+
   it("professor cria só para a própria turma; admin para qualquer; aluno e coordenador não", async () => {
     await expect(A.createAssignment(as("teachA", "teacher"), { classId: id.classB, title: "x" }, [])).rejects.toMatchObject({ status: 403 });
     await expect(A.createAssignment(as("stuA", "student"), { classId: id.classA, title: "x" }, [])).rejects.toMatchObject({ status: 403 });
