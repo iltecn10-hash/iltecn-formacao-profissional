@@ -40,6 +40,7 @@ const ICON_BY_HREF: Record<string, IconName> = {
   "/dashboard/relatorio": "chart",
   "/dashboard/schools": "building",
   "/dashboard/teachers": "user",
+  "/dashboard/coordenacao": "users",
   "/dashboard/students": "users",
   "/dashboard/classes": "users",
   "/dashboard/formacao": "settings",
@@ -65,6 +66,7 @@ const GROUP_BY_HREF: Record<string, NavGroup> = {
   "/dashboard/relatorio": "acompanhamento",
   "/dashboard/schools": "cadastros",
   "/dashboard/teachers": "cadastros",
+  "/dashboard/coordenacao": "cadastros",
   "/dashboard/students": "cadastros",
   "/dashboard/classes": "cadastros",
   "/dashboard/formacao": "cadastros",
@@ -153,6 +155,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   { href: "/dashboard/schools", label: "Escolas", roles: ["admin", "coordinator"] },
   { href: "/dashboard/teachers", label: "Professores", roles: ["admin"] },
+  { href: "/dashboard/coordenacao", label: "Coordenação e direção", roles: ["admin"] },
   {
     href: "/dashboard/students",
     label: "Alunos",

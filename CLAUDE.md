@@ -1036,6 +1036,14 @@ Migration `migrations/2026-10-15_conselho_avaliacoes.sql` (aditiva): `council_ev
   e 3 (supermercado). Listas de professores/alunos passaram a trazer `active`.
 - Testes: `registry-records` (integração, escopo e apagar-ou-desativar) e `registry-authorization` (rotas). `tests/setup/testDb.ts` ganhou colunas de escolas/updated_at e `internal_messages`. 414 testes.
 
+## Coordenação e direção (2026-10-16, branch `feat/coordenacao-direcao`, parte da `feat/editar-excluir-etapa1`)
+Migration `migrations/2026-10-16_coordenacao_cargo.sql` (aditiva, **NÃO aplicada em produção** até confirmação): `coordinators.position`
+('coordenador'|'diretor', default 'coordenador', CHECK). **Diretor = mesmo perfil `coordinator` e mesmo acesso** (escopo da própria escola); o cargo só muda o rótulo
+exibido (`AppShell` recebe `roleLabel`). Só o **admin** cadastra/edita/desativa/exclui (inteligente) — `src/modules/coordination/queries.ts`,
+`updateCoordinator/setCoordinatorActive/deleteCoordinator` em `registry/records.ts`, rotas `GET|POST /api/coordination` e `PATCH|DELETE /api/coordination/[id]`,
+tela `/dashboard/coordenacao` ("Coordenação e direção", menu Cadastros, admin). Senha provisória segue `validateNewPassword("coordinator", …)`.
+**Ordem de deploy: migration → deploy do código** (o layout consulta `coordinators.position`). Testes: `coordination`, `coordination-authorization`. 425 testes.
+
 ## Comandos
 
 ```bash

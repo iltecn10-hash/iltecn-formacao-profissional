@@ -157,6 +157,67 @@ export async function deleteTeacher(actor: ScopeActor, id: string): Promise<Dele
   return "deleted";
 }
 
+// ─────────────────────── Coordenação e direção (só admin) ───────────────────────
+
+export interface CoordinatorEdit {
+  name: string;
+  email: string;
+  schoolId: string;
+  position: "coordenador" | "diretor";
+}
+
+async function loadCoordinator(id: string) {
+  return queryOne<{ id: string; user_id: string }>(`SELECT id, user_id FROM coordinators WHERE id = $1::uuid`, [id]);
+}
+
+export async function updateCoordinator(actor: ScopeActor, id: string, input: CoordinatorEdit) {
+  if (actor.role !== "admin") throw FORBIDDEN;
+  const c = await loadCoordinator(id);
+  if (!c) throw NOT_FOUND;
+  const school = await queryOne<{ id: string }>(`SELECT id FROM schools WHERE id = $1::uuid`, [input.schoolId]);
+  if (!school) throw new RecordError(400, "Escola inválida.");
+  try {
+    await query(`UPDATE users SET name = $2, email = $3, updated_at = now() WHERE id = $1::uuid`, [
+      c.user_id,
+      input.name,
+      input.email.toLowerCase(),
+    ]);
+  } catch (err) {
+    if (isDuplicate(err)) throw new RecordError(409, "Já existe um usuário com este e-mail.");
+    throw err;
+  }
+  await query(`UPDATE coordinators SET school_id = $2::uuid, position = $3, updated_at = now() WHERE id = $1::uuid`, [
+    id,
+    input.schoolId,
+    input.position,
+  ]);
+}
+
+export async function setCoordinatorActive(actor: ScopeActor, id: string, active: boolean) {
+  if (actor.role !== "admin") throw FORBIDDEN;
+  const c = await loadCoordinator(id);
+  if (!c) throw NOT_FOUND;
+  await query(`UPDATE users SET active = $2, updated_at = now() WHERE id = $1::uuid`, [c.user_id, active]);
+}
+
+export async function deleteCoordinator(actor: ScopeActor, id: string): Promise<DeleteResult> {
+  if (actor.role !== "admin") throw FORBIDDEN;
+  const c = await loadCoordinator(id);
+  if (!c) throw NOT_FOUND;
+  const used = await count(
+    `SELECT (SELECT COUNT(*) FROM council_evaluation_events WHERE actor_id = $1::uuid)
+          + (SELECT COUNT(*) FROM internal_messages WHERE sender_id = $1::uuid OR recipient_id = $1::uuid) AS n`,
+    [c.user_id]
+  );
+  if (used > 0) {
+    await query(`UPDATE users SET active = false, updated_at = now() WHERE id = $1::uuid`, [c.user_id]);
+    return "deactivated";
+  }
+  await query(`DELETE FROM coordinators WHERE id = $1::uuid`, [id]);
+  await query(`DELETE FROM users WHERE id = $1::uuid`, [c.user_id]);
+  return "deleted";
+}
+
 // ─────────────────────────── Alunos ───────────────────────────
 
 export interface StudentEdit {

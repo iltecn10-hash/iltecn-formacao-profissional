@@ -71,7 +71,9 @@ export function createTestDb() {
     CREATE TABLE coordinators (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id UUID NOT NULL REFERENCES users(id),
-      school_id UUID REFERENCES schools(id)
+      school_id UUID REFERENCES schools(id),
+      position VARCHAR(20) NOT NULL DEFAULT 'coordenador',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
     CREATE TABLE classes (
