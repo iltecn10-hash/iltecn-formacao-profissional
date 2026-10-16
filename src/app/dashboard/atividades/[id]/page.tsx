@@ -11,6 +11,7 @@ import {
 } from "@/modules/assignments/queries";
 import { RecordActions } from "@/components/record-actions";
 import { SubmitAssignmentForm } from "@/components/assignments/submit-form";
+import { MaterialsManager } from "@/components/assignments/materials-manager";
 import { EvaluateSubmissionForm } from "@/components/assignments/evaluate-form";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -85,6 +86,7 @@ export default async function AtividadePage({ params }: { params: Promise<{ id: 
         <div className="mt-2">
           <FileLinks files={materials} />
         </div>
+        {level === "manage" && <MaterialsManager assignmentId={a.id} materials={materials} />}
       </div>
 
       {level === "student" && acc.studentId && (

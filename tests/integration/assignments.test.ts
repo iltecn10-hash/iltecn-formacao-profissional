@@ -49,6 +49,18 @@ describe("atividades da turma", () => {
     return (await A.createAssignment(as("teachA", "teacher"), { classId: id.classA, title, dueDate: "2099-01-01" }, [file("material.txt")])).id;
   }
 
+  it("professor acrescenta e remove materiais depois de criada a atividade; outros não", async () => {
+    const aid = await create();
+    await A.addMaterials(as("teachA", "teacher"), aid, [file("novo.txt")]);
+    const list = await A.listMaterials(aid);
+    expect(list.map((m) => m.file_name)).toEqual(["material.txt", "novo.txt"]);
+    await expect(A.addMaterials(as("teachB", "teacher"), aid, [file("x.txt")])).rejects.toBeTruthy();
+    await expect(A.addMaterials(as("stuA", "student"), aid, [file("x.txt")])).rejects.toBeTruthy();
+    await expect(A.removeMaterial(as("teachB", "teacher"), aid, list[1].id)).rejects.toBeTruthy();
+    await A.removeMaterial(as("teachA", "teacher"), aid, list[1].id);
+    expect((await A.listMaterials(aid)).map((m) => m.file_name)).toEqual(["material.txt"]);
+  });
+
   it("professor cria só para a própria turma; admin para qualquer; aluno e coordenador não", async () => {
     await expect(A.createAssignment(as("teachA", "teacher"), { classId: id.classB, title: "x" }, [])).rejects.toMatchObject({ status: 403 });
     await expect(A.createAssignment(as("stuA", "student"), { classId: id.classA, title: "x" }, [])).rejects.toMatchObject({ status: 403 });

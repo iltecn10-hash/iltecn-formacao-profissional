@@ -158,6 +158,32 @@ export async function updateAssignment(
   );
 }
 
+const MAX_MATERIALS = 10;
+
+/** Professor da turma (ou admin) acrescenta materiais a uma atividade já criada. */
+export async function addMaterials(actor: ScopeActor, id: string, files: UploadedFile[]) {
+  const acc = await getAssignmentAccess(actor, id);
+  if (!acc) throw NOT_FOUND;
+  if (acc.level !== "manage") throw FORBIDDEN;
+  if (files.length === 0) throw new RecordError(400, "Escolha ao menos um arquivo.");
+  const current = await listMaterials(id);
+  if (current.length + files.length > MAX_MATERIALS) {
+    throw new RecordError(409, `Cada atividade aceita até ${MAX_MATERIALS} materiais.`);
+  }
+  await insertFiles(id, null, "material", actor.userId, files);
+}
+
+export async function removeMaterial(actor: ScopeActor, id: string, fileId: string) {
+  const acc = await getAssignmentAccess(actor, id);
+  if (!acc) throw NOT_FOUND;
+  if (acc.level !== "manage") throw FORBIDDEN;
+  const rows = await query<{ id: string }>(
+    `DELETE FROM assignment_files WHERE id = $1::uuid AND assignment_id = $2::uuid AND kind = 'material' RETURNING id`,
+    [fileId, id]
+  );
+  if (rows.length === 0) throw NOT_FOUND;
+}
+
 export async function setAssignmentClosed(actor: ScopeActor, id: string, closed: boolean) {
   const acc = await getAssignmentAccess(actor, id);
   if (!acc) throw NOT_FOUND;
