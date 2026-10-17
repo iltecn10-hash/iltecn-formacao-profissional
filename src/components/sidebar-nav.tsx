@@ -80,6 +80,7 @@ const GROUP_BY_HREF: Record<string, NavGroup> = {
 const KIDS_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/lab", label: "🏠 Meu painel", roles: ["student"] },
   { href: "/dashboard/jogos", label: "🎮 Jogos", roles: ["student"] },
+  { href: "/dashboard/atividades", label: "📚 Atividades", roles: ["student"] },
   { href: "/dashboard/lab/certificado", label: "🎓 Certificado", roles: ["student"] },
   { href: "/dashboard/conta", label: "🔑 Minha conta", roles: ["student"] },
 ];

@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth";
 import { listStudents } from "@/modules/students/queries";
 import { listSchools } from "@/modules/schools/queries";
 import { getActorSchoolId } from "@/modules/schools/scope";
+import { listClasses } from "@/modules/classes/queries";
+import { listTeachers } from "@/modules/teachers/queries";
 import { StudentForm } from "@/components/student-form";
 import { ResetPasswordButton } from "@/components/reset-password-button";
 import { RecordActions } from "@/components/record-actions";
@@ -15,7 +17,17 @@ export default async function StudentsPage() {
   }
 
   const actor = { userId: session.userId, role: session.role };
-  const [students, allSchools] = await Promise.all([listStudents(actor), listSchools()]);
+  const [students, allSchools, allClasses, teachers] = await Promise.all([
+    listStudents(actor),
+    listSchools(),
+    listClasses(actor),
+    listTeachers(actor),
+  ]);
+  // Matrícula na criação: admin em qualquer turma; professor só nas turmas pelas quais é responsável.
+  const myTeacherId = teachers.find((t) => t.user_id === session.userId)?.id ?? null;
+  const enrollable = allClasses.filter(
+    (c) => c.active && (session.role === "admin" || (myTeacherId !== null && c.teacher_id === myTeacherId))
+  );
   // Professor só cadastra na própria escola (a rota também confere no servidor).
   const mySchoolId = session.role === "admin" ? null : await getActorSchoolId(actor);
   const schools =
@@ -33,7 +45,7 @@ export default async function StudentsPage() {
             Cadastrar aluno
           </h2>
           <div className="mt-4">
-            <StudentForm schools={schools} />
+            <StudentForm schools={schools} classes={enrollable} />
           </div>
         </div>
       )}

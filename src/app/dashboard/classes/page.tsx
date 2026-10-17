@@ -4,6 +4,7 @@ import { listClasses } from "@/modules/classes/queries";
 import { listSchools } from "@/modules/schools/queries";
 import { listTeachers } from "@/modules/teachers/queries";
 import { getActorSchoolId } from "@/modules/schools/scope";
+import Link from "next/link";
 import { ClassForm } from "@/components/class-form";
 import { RecordActions } from "@/components/record-actions";
 
@@ -79,7 +80,17 @@ export default async function ClassesPage() {
                   {c.shift ? shiftLabel[c.shift] : "—"}
                 </td>
                 <td className="px-5 py-3 text-muted">{c.school_year}</td>
-                <td className="px-5 py-3 text-muted">{c.student_count ?? 0}</td>
+                <td className="px-5 py-3 text-muted">
+                  {c.student_count ?? 0}
+                  {(canManage || (myTeacherId !== null && c.teacher_id === myTeacherId)) && (
+                    <Link
+                      href={`/dashboard/classes/${c.id}/alunos`}
+                      className="ml-2 text-sm font-medium text-primary underline underline-offset-2"
+                    >
+                      Matricular alunos
+                    </Link>
+                  )}
+                </td>
                 <td className="px-5 py-3">
                   <span className={`badge ${c.active ? "badge-success" : "badge-danger"}`}>
                     {c.active ? "Ativa" : "Desativada"}
