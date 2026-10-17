@@ -1056,6 +1056,13 @@ não tem armazenamento de objetos). Limites no servidor (`src/lib/uploads.ts`): 
 - Ficha do aluno: `/dashboard/students/[id]/arquivos` (link "Ver arquivos" na tela Alunos; escopo `canActorViewStudent` + só entregas de atividades que o ator acessa — `listDeliveriesForStudent`).
 **Ordem de deploy: migration → deploy do código.** Testes: `assignments` (integração), `assignments-authorization`, `uploads`. Materiais podem ser acrescentados/removidos depois (`POST /api/assignments/[id]/materials`, `DELETE …/materials/[fileId]`; até 10 por atividade; `MaterialsManager` na tela da atividade). Seletor de arquivos = `FilePicker` (botão visível). Disciplina (opcional): `assignments.subject_id` → `subjects` (migration `migrations/2026-10-16_atividade_disciplina.sql`, aplicada em produção em 2026-10-16; deploy: migration → código); precisa ser ativa e da escola da turma; editável pelo `RecordActions`. Limitação: sem varredura de vírus.
 
+## Matrícula de alunos na turma (2026-10-17, sem migration, branch `feat/matricula-turma`)
+Antes disso NÃO havia tela para matricular (nenhum aluno tinha `enrollments`, então ninguém via as atividades da turma). `src/modules/classes/enrollments.ts`:
+`getClassRoster`, `enrollInClass` (aluno da MESMA escola, ativo; turma ativa; reativa matrícula antiga em vez de duplicar), `unenrollFromClass` (marca `inactive`, histórico preservado).
+Quem pode: admin · coordenador/diretor da escola · professor RESPONSÁVEL pela turma. Rotas `GET|POST|DELETE /api/classes/[id]/enrollments` (DELETE com `?studentId=`).
+Telas: `/dashboard/classes/[id]/alunos` (link "Matricular alunos" na tela Turmas) e campo opcional "Turma" no cadastro de aluno. Menu infantil (`KIDS_NAV_ITEMS`) ganhou "📚 Atividades".
+Testes: `enrollments` (integração), `enrollments-authorization`. 461 testes.
+
 ## Backups antes de publicar (regra do usuário, 2026-10-16)
 **Sempre** criar um ponto de restauração ANTES de publicar: (1) branch no GitHub `backup/antes-<mudança>-AAAA-MM-DD` apontando para o `main` atual
 (`git push origin <sha>:refs/heads/backup/...`; o envio de *tags* é recusado pelo proxy do sandbox); (2) snapshot do Neon (`create_snapshot` na branch `br-fancy-morning-axjthn7q`).

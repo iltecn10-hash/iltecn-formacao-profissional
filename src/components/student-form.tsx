@@ -6,13 +6,20 @@ import type { School } from "@/types";
 
 const inputClass = "field";
 
-export function StudentForm({ schools }: { schools: School[] }) {
+export function StudentForm({
+  schools,
+  classes = [],
+}: {
+  schools: School[];
+  classes?: { id: string; name: string; school_id: string }[];
+}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [schoolId, setSchoolId] = useState(schools[0]?.id ?? "");
   const [guardianName, setGuardianName] = useState("");
+  const [classId, setClassId] = useState("");
   const [audience, setAudience] = useState<"professional" | "kids">("professional");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,6 +52,22 @@ export function StudentForm({ schools }: { schools: School[] }) {
       setError(data.error ?? "Não foi possível concluir esta operação.");
       setLoading(false);
       return;
+    }
+
+    // Matrícula opcional na turma escolhida (sem ela o aluno não vê as atividades da turma).
+    if (classId && data.student?.id) {
+      const enr = await fetch(`/api/classes/${classId}/enrollments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: data.student.id }),
+      });
+      if (!enr.ok) {
+        const e = await enr.json().catch(() => ({}));
+        setError(`Aluno cadastrado, mas não foi possível matricular na turma: ${e.error ?? "tente em Turmas → Matricular alunos."}`);
+        setLoading(false);
+        router.refresh();
+        return;
+      }
     }
 
     setName("");
@@ -114,6 +137,22 @@ export function StudentForm({ schools }: { schools: School[] }) {
           placeholder="Mínimo 6 caracteres"
           className={inputClass}
         />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
+          Turma (opcional)
+        </label>
+        <select value={classId} onChange={(e) => setClassId(e.target.value)} className={inputClass}>
+          <option value="">Matricular depois</option>
+          {classes
+            .filter((c) => c.school_id === schoolId)
+            .map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+        </select>
       </div>
 
       <div className="sm:col-span-2">
